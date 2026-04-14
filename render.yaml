@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: digital-agency-website
+    env: node
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
