@@ -1,25 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icons } from '@/components/ui/Icons';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { portfolio, WHATSAPP_URL } from '@/lib/data';
-
-const categoryImages: Record<string, string> = {
-  salon: 'from-pink-500 to-rose-500',
-  dental: 'from-blue-500 to-cyan-500',
-  gym: 'from-orange-500 to-red-500',
-  restaurant: 'from-yellow-500 to-orange-500',
-  fashion: 'from-purple-500 to-pink-500',
-  cafe: 'from-amber-500 to-yellow-500',
-  pharmacy: 'from-green-500 to-emerald-500',
-  tech: 'from-blue-600 to-indigo-600',
-  tiffin: 'from-green-500 to-teal-500',
-  pet: 'from-amber-400 to-orange-400',
-  education: 'from-indigo-500 to-purple-500',
-  auto: 'from-gray-600 to-gray-800',
-};
 
 export default function PortfolioSection() {
   const featuredProjects = portfolio.slice(0, 6);
@@ -39,68 +25,71 @@ export default function PortfolioSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredProjects.map((project, index) => {
-            const gradient = categoryImages[project.image] || 'from-gray-500 to-gray-600';
-            return (
-              <Card 
-                key={index} 
-                hover 
-                className="group overflow-hidden"
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {featuredProjects.map((project, index) => (
+            <Card 
+              key={index} 
+              hover 
+              className="group overflow-hidden"
+            >
+              <a 
+                href={project.demo} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block"
               >
-                <div className={`aspect-[4/3] bg-gradient-to-br ${gradient} relative overflow-hidden`}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110">
-                      <Icons.Building2 className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
                   
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-500 flex items-center justify-center">
-                    <a 
-                      href={project.demo} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button size="sm" className="bg-white text-dark-900 hover:bg-gray-100">
-                        <Icons.ExternalLink className="w-4 h-4 mr-2" />
-                        View Demo
-                      </Button>
-                    </a>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="bg-white rounded-xl px-5 py-3 shadow-xl flex items-center gap-2">
+                        <Icons.ExternalLink className="w-5 h-5 text-primary-600" />
+                        <span className="font-semibold text-dark-900">View Demo</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="absolute top-3 left-3">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-dark-900 text-xs font-semibold rounded-full shadow-lg">
+                    <span className="px-3 py-1 bg-white/95 backdrop-blur-sm text-dark-900 text-xs font-semibold rounded-full shadow-lg">
                       {project.category}
                     </span>
                   </div>
                 </div>
+              </a>
+              
+              <div className="p-5">
+                <h3 className="text-lg font-bold text-dark-900 mb-1 group-hover:text-primary-600 transition-colors">
+                  {project.title}
+                </h3>
+                <p className="text-dark-600 text-sm mb-3 line-clamp-2">
+                  {project.description}
+                </p>
                 
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-dark-900 mb-1 group-hover:text-primary-600 transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="text-dark-600 text-sm mb-4 line-clamp-2">
-                    {project.description}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
                     {project.features.slice(0, 2).map((feature, i) => (
                       <span key={i} className="px-2 py-0.5 bg-gray-100 text-dark-600 text-xs rounded-full">
                         {feature}
                       </span>
                     ))}
                   </div>
-                  
-                  <div className="flex items-center text-sm text-green-600 font-medium">
+                  <div className="flex items-center text-green-600 text-sm font-medium">
                     <Icons.TrendingUp className="w-4 h-4 mr-1" />
-                    {project.results[0]}
+                    {project.results[0].split(' ')[0]}
                   </div>
                 </div>
-              </Card>
-            );
-          })}
+              </div>
+            </Card>
+          ))}
         </div>
         
         <div className="text-center mt-12">

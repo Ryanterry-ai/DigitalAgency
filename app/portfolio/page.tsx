@@ -2,29 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icons } from '@/components/ui/Icons';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { portfolio, portfolioCategories, WHATSAPP_URL } from '@/lib/data';
 
-const categoryImages: Record<string, { gradient: string; icon: string }> = {
-  salon: { gradient: 'from-pink-500 to-rose-500', icon: 'Sparkles' },
-  dental: { gradient: 'from-blue-500 to-cyan-500', icon: 'Shield' },
-  gym: { gradient: 'from-orange-500 to-red-500', icon: 'Zap' },
-  restaurant: { gradient: 'from-yellow-500 to-orange-500', icon: 'Star' },
-  fashion: { gradient: 'from-purple-500 to-pink-500', icon: 'Heart' },
-  cafe: { gradient: 'from-amber-500 to-yellow-500', icon: 'Coffee' },
-  pharmacy: { gradient: 'from-green-500 to-emerald-500', icon: 'Heart' },
-  tech: { gradient: 'from-blue-600 to-indigo-600', icon: 'Code' },
-  tiffin: { gradient: 'from-green-500 to-teal-500', icon: 'Star' },
-  pet: { gradient: 'from-amber-400 to-orange-400', icon: 'Heart' },
-  education: { gradient: 'from-indigo-500 to-purple-500', icon: 'Target' },
-  auto: { gradient: 'from-gray-600 to-gray-800', icon: 'Rocket' },
-};
-
 export default function PortfolioContent() {
   const [activeCategory, setActiveCategory] = useState('All');
-  const [hoveredProject, setHoveredProject] = useState<number | null>(null);
+  const [selectedProject, setSelectedProject] = useState<typeof portfolio[0] | null>(null);
 
   const filteredProjects = activeCategory === 'All'
     ? portfolio
@@ -50,7 +36,7 @@ export default function PortfolioContent() {
               Results That Speak for <span className="text-gradient">Themselves</span>
             </h1>
             <p className="subheading text-dark-400">
-              See how we&apos;ve helped 150+ businesses across India achieve their digital goals. From local shops to growing brands.
+              Real websites we&apos;ve built for real businesses. Click any project to preview the full design!
             </p>
           </div>
         </div>
@@ -74,99 +60,180 @@ export default function PortfolioContent() {
             ))}
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project, index) => {
-              const imgConfig = categoryImages[project.image] || { gradient: 'from-gray-500 to-gray-600', icon: 'Globe' };
-              return (
-                <Card 
-                  key={index} 
-                  className="overflow-hidden group cursor-pointer transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
-                  onMouseEnter={() => setHoveredProject(index)}
-                  onMouseLeave={() => setHoveredProject(null)}
-                >
-                  <div className={`aspect-[4/3] bg-gradient-to-br ${imgConfig.gradient} relative overflow-hidden`}>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className={`w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center transform transition-transform duration-500 ${hoveredProject === index ? 'scale-110' : ''}`}>
-                        <Icons.Building2 className="w-10 h-10 text-white" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProjects.map((project, index) => (
+              <Card 
+                key={index} 
+                className="overflow-hidden group cursor-pointer transform transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl"
+                onClick={() => setSelectedProject(project)}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-8 py-5 shadow-2xl text-center">
+                        <Icons.ExternalLink className="w-10 h-10 text-primary-600 mx-auto mb-2" />
+                        <p className="font-bold text-dark-900 text-lg">Click to Preview</p>
+                        <p className="text-sm text-dark-500">Full Website Design</p>
                       </div>
                     </div>
-                    
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-500 flex items-center justify-center">
-                      <a 
-                        href={project.demo} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button size="sm" className="bg-white text-dark-900 hover:bg-gray-100">
-                          <Icons.ExternalLink className="w-4 h-4 mr-2" />
-                          View Demo
-                        </Button>
-                      </a>
-                    </div>
+                  </div>
 
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-dark-900 text-xs font-semibold rounded-full shadow-lg">
-                        {project.category}
-                      </span>
+                  <div className="absolute top-4 left-4">
+                    <span className="px-4 py-2 bg-white/95 backdrop-blur-sm text-dark-900 text-sm font-bold rounded-full shadow-lg flex items-center gap-2">
+                      <Icons.ExternalLink className="w-4 h-4" />
+                      {project.category}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 right-4">
+                    <div className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                      <Icons.CheckCircle className="w-3 h-3" />
+                      Live Project
                     </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-dark-900 mb-2 group-hover:text-primary-600 transition-colors">
+                    {project.title}
+                  </h3>
+                  <p className="text-dark-600 text-sm mb-5">
+                    {project.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {project.features.slice(0, 3).map((feature, i) => (
+                      <span key={i} className="px-3 py-1 bg-primary-50 text-primary-700 text-xs font-medium rounded-full">
+                        {feature}
+                      </span>
+                    ))}
                   </div>
                   
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-dark-900 mb-2 group-hover:text-primary-600 transition-colors">
-                      {project.title}
-                    </h3>
-                    <p className="text-dark-600 text-sm mb-4 line-clamp-2">
-                      {project.description}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.features.slice(0, 3).map((feature, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 text-dark-600 text-xs rounded-full">
-                          {feature}
-                        </span>
+                  <div className="border-t border-gray-100 pt-5">
+                    <h4 className="text-xs font-bold text-dark-400 uppercase tracking-wider mb-3">Results Achieved</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {project.results.map((result, i) => (
+                        <div key={i} className="text-center p-2 bg-green-50 rounded-lg">
+                          <p className="text-xs font-bold text-green-700">{result.split(' ')[0]}</p>
+                          <p className="text-[10px] text-green-600">{result.split(' ').slice(1).join(' ')}</p>
+                        </div>
                       ))}
                     </div>
-                    
-                    <div className="border-t border-gray-100 pt-4">
-                      <h4 className="text-xs font-semibold text-dark-500 uppercase tracking-wider mb-3">Results</h4>
-                      <div className="space-y-1">
-                        {project.results.map((result, i) => (
-                          <div key={i} className="flex items-center text-sm text-dark-700">
-                            <Icons.CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                            {result}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
-                </Card>
-              );
-            })}
+                </div>
+              </Card>
+            ))}
           </div>
-
-          {filteredProjects.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-dark-500">No projects found in this category.</p>
-            </div>
-          )}
         </div>
       </section>
+
+      {selectedProject && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setSelectedProject(null)}
+        >
+          <div 
+            className="relative max-w-6xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedProject(null)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 bg-dark-900/50 hover:bg-dark-900 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <Icons.X className="w-6 h-6" />
+            </button>
+            
+            <div className="relative aspect-video w-full">
+              <Image
+                src={selectedProject.image}
+                alt={selectedProject.title}
+                fill
+                className="object-cover"
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                <span className="px-4 py-1 bg-primary-500 text-sm font-bold rounded-full mb-3 inline-block">
+                  {selectedProject.category}
+                </span>
+                <h2 className="text-3xl font-bold mb-2">{selectedProject.title}</h2>
+                <p className="text-lg opacity-90">{selectedProject.description}</p>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-bold text-dark-900 mb-4">Features Included</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedProject.features.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Icons.CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-dark-700">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-dark-900 mb-4">Results Achieved</h3>
+                  <div className="space-y-3">
+                    {selectedProject.results.map((result, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                        <Icons.TrendingUp className="w-6 h-6 text-green-500" />
+                        <span className="text-dark-700 font-medium">{result}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-dark-600">
+                  Want a similar website for <strong>your business</strong>? Get a free consultation!
+                </p>
+                <div className="flex gap-3">
+                  <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                    <Button className="bg-green-500 hover:bg-green-600">
+                      <Icons.MessageCircle className="w-5 h-5 mr-2" />
+                      WhatsApp Us
+                    </Button>
+                  </a>
+                  <Link href="/contact" onClick={() => setSelectedProject(null)}>
+                    <Button variant="gradient">
+                      Get Free Quote
+                      <Icons.ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="section-padding bg-gradient-to-br from-primary-600 to-accent-600">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h2 className="heading-2 mb-6">
-              Ready to Build Your Success Story?
+              Like What You See?
             </h2>
             <p className="subheading text-white/80 mb-8">
-              Join 150+ businesses who trust us with their digital presence. Let&apos;s create something amazing together.
+              Get a stunning website like this for YOUR business. Click below for a free consultation!
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/contact">
-                <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
-                  Start Your Project
+                <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-100 shadow-xl">
+                  Get Free Consultation
                   <Icons.ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
