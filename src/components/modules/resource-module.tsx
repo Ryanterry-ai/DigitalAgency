@@ -46,6 +46,13 @@ export function ResourceModule({
   fields: FieldConfig[];
   allowDelete?: boolean;
 }) {
+  const isDateLikeString = (value: string) => {
+    if (!value) return false;
+    const hasDatePattern = /^\d{4}-\d{2}-\d{2}/.test(value);
+    if (!hasDatePattern) return false;
+    return !Number.isNaN(Date.parse(value));
+  };
+
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -351,7 +358,7 @@ export function ResourceModule({
                               >
                                 {rendered}
                               </Badge>
-                            ) : typeof rendered === "string" && rendered.includes("T") ? (
+                            ) : typeof rendered === "string" && isDateLikeString(rendered) ? (
                               formatDate(rendered)
                             ) : (
                               String(rendered ?? "-")
