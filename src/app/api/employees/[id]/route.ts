@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 
-import { requireApiSession } from "@/lib/auth/api-session";
+import { requireApiRole } from "@/lib/auth/api-session";
 import { fail, ok } from "@/lib/http";
 import { deleteEmployee, updateEmployee } from "@/server/services/data.service";
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireApiSession();
+    await requireApiRole(["admin"]);
     const body = await request.json();
     const record = await updateEmployee(params.id, body);
     if (!record) {
@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireApiSession();
+    await requireApiRole(["admin"]);
     const deleted = await deleteEmployee(params.id);
     if (!deleted) {
       return fail("Employee not found", 404);

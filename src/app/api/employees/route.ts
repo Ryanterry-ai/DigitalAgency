@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { requireApiSession } from "@/lib/auth/api-session";
+import { requireApiRole, requireApiSession } from "@/lib/auth/api-session";
 import { fail, ok } from "@/lib/http";
 import { employeeSchema } from "@/lib/validation/schemas";
 import { createEmployee, listEmployees } from "@/server/services/data.service";
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiSession();
+    await requireApiRole(["admin"]);
     const body = await request.json();
     const parsed = employeeSchema.safeParse(body);
     if (!parsed.success) {

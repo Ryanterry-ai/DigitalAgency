@@ -1,8 +1,15 @@
 import { ReportsCharts } from "@/components/charts/reports-charts";
 import { Card } from "@/components/ui/card";
+import { getCurrentSession } from "@/lib/auth/current-user";
 import { getReportsData } from "@/server/services/data.service";
+import { redirect } from "next/navigation";
 
 export default async function ReportsPage() {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   const data = await getReportsData();
 
   return (

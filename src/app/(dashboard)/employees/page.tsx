@@ -1,6 +1,13 @@
 import { ResourceModule } from "@/components/modules/resource-module";
+import { getCurrentSession } from "@/lib/auth/current-user";
+import { redirect } from "next/navigation";
 
-export default function EmployeesPage() {
+export default async function EmployeesPage() {
+  const session = await getCurrentSession();
+  if (!session || session.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   return (
     <ResourceModule
       title="Employee Management"
