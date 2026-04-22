@@ -52,6 +52,11 @@ enum OrderStatus {
   canceled
 }
 
+enum RetailProofStatus {
+  verified
+  unverified
+}
+
 enum NotificationType {
   issue
   follow_up
@@ -176,22 +181,31 @@ model Retailer {
 }
 
 model RetailVisit {
-  id          String    @id @default(cuid())
-  retailerId  String
-  employeeId  String
-  visitDate   DateTime
-  visitTime   String
-  notes       String?
-  photoUrls   String[]
-  createdAt   DateTime  @default(now())
-  retailer    Retailer  @relation(fields: [retailerId], references: [id], onDelete: Cascade)
-  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id                    String            @id @default(cuid())
+  retailerId            String
+  employeeId            String
+  visitDate             DateTime
+  visitTime             String
+  notes                 String?
+  photoUrls             String[]
+  proofStatus           RetailProofStatus @default(unverified)
+  presencePhotoUrl      String?
+  presenceCapturedAt    DateTime?
+  presenceLatitude      Decimal?          @db.Decimal(10, 7)
+  presenceLongitude     Decimal?          @db.Decimal(10, 7)
+  presenceAccuracyMeters Decimal?         @db.Decimal(8, 2)
+  presenceCaptureMethod String?
+  createdAt             DateTime          @default(now())
+  retailer              Retailer          @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  employee              Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Order {
   id           String      @id @default(cuid())
   retailerId   String
   employeeId   String?
+  metPersonName String
+  metPersonMobile String
   productName  String
   quantity     Int
   followUpDate DateTime?

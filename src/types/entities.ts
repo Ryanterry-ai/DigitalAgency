@@ -89,6 +89,16 @@ export type RetailerRecord = {
   address: string;
 };
 
+export type RetailPresenceProof = {
+  photoUrl: string;
+  capturedAt: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters?: number;
+  captureMethod: "camera_capture" | "file_upload";
+  locationVerified: boolean;
+};
+
 export type RetailVisitRecord = {
   id: string;
   retailerId: string;
@@ -99,6 +109,8 @@ export type RetailVisitRecord = {
   visitTime: string;
   notes?: string;
   photoUrls: string[];
+  presenceProof?: RetailPresenceProof;
+  proofStatus: "verified" | "unverified";
 };
 
 export type OrderRecord = {
@@ -107,6 +119,8 @@ export type OrderRecord = {
   shopName: string;
   employeeId?: string;
   employeeName?: string;
+  metPersonName: string;
+  metPersonMobile: string;
   productName: string;
   quantity: number;
   followUpDate?: string;

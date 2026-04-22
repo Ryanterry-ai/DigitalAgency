@@ -47,6 +47,16 @@ const employees: EmployeeRecord[] = [
     joiningDate: "2024-02-05",
     status: "active",
   },
+  {
+    id: "emp_003",
+    employeeCode: "SAI-EMP-103",
+    fullName: "Arjun Khanna",
+    email: "arjun@saiassociates.in",
+    mobile: "8865056535",
+    location: "Mathura",
+    joiningDate: "2024-03-12",
+    status: "active",
+  },
 ];
 
 const atmSites: AtmSiteRecord[] = [
@@ -177,6 +187,16 @@ const retailVisits: RetailVisitRecord[] = [
     photoUrls: [
       "https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=900&q=80",
     ],
+    presenceProof: {
+      photoUrl: "https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=900&q=80",
+      capturedAt: now.toISOString(),
+      latitude: 27.4924,
+      longitude: 77.6737,
+      accuracyMeters: 18,
+      captureMethod: "camera_capture",
+      locationVerified: true,
+    },
+    proofStatus: "verified",
   },
 ];
 
@@ -187,6 +207,8 @@ const orders: OrderRecord[] = [
     shopName: "Shree Electricals",
     employeeId: "emp_002",
     employeeName: "Neha Verma",
+    metPersonName: "Mukesh Gupta",
+    metPersonMobile: "9988001122",
     productName: "Crompton Aura Prime 1200mm",
     quantity: 6,
     followUpDate: new Date(now.getTime() + 2 * 24 * 3600000).toISOString(),
@@ -199,6 +221,8 @@ const orders: OrderRecord[] = [
     shopName: "Goyal Traders",
     employeeId: "emp_001",
     employeeName: "Ravi Singh",
+    metPersonName: "Amit Goyal",
+    metPersonMobile: "9877003344",
     productName: "Crompton LED Driver 24W",
     quantity: 20,
     followUpDate: new Date(now.getTime() + 1 * 24 * 3600000).toISOString(),
@@ -240,6 +264,10 @@ const users = new Map<string, UserSession>([
   [
     "9123456780",
     { id: "usr_emp_2", mobile: "9123456780", role: "employee", employeeId: "emp_002", name: "Neha Verma" },
+  ],
+  [
+    "8865056535",
+    { id: "usr_emp_3", mobile: "8865056535", role: "employee", employeeId: "emp_003", name: "Arjun Khanna" },
   ],
 ]);
 

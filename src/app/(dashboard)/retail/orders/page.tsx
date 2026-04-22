@@ -7,7 +7,7 @@ export default async function RetailOrdersPage() {
   return (
     <ResourceModule
       title="Orders & Follow-up Notes"
-      description="Track booked orders, product quantities, and follow-up commitments."
+      description="Track booked orders, product quantities, follow-up commitments, and the person met at each retailer."
       endpoint="/api/retail/orders"
       fields={[
         {
@@ -25,6 +25,8 @@ export default async function RetailOrdersPage() {
         },
         { name: "productName", label: "Product", required: true },
         { name: "quantity", label: "Quantity", type: "number", required: true },
+        { name: "metPersonName", label: "Person Met Name", required: true },
+        { name: "metPersonMobile", label: "Person Met Mobile", required: true },
         { name: "followUpDate", label: "Follow-up Date", type: "date" },
         {
           name: "orderStatus",
@@ -45,6 +47,8 @@ export default async function RetailOrdersPage() {
         { key: "productName", header: "Product" },
         { key: "quantity", header: "Qty" },
         { key: "employeeName", header: "Employee" },
+        { key: "metPersonName", header: "Person Met" },
+        { key: "metPersonMobile", header: "Mobile" },
         { key: "orderStatus", header: "Status" },
         { key: "followUpDate", header: "Follow-up" },
       ]}

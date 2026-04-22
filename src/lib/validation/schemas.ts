@@ -70,18 +70,43 @@ export const retailerSchema = z.object({
   address: z.string().min(4),
 });
 
-export const retailVisitSchema = z.object({
-  retailerId: z.string().min(1),
-  employeeId: z.string().min(1),
-  visitDate: z.string(),
-  visitTime: z.string().min(1),
-  notes: z.string().optional(),
-  photoUrls: z.array(z.string()).default([]),
+const retailPresenceProofSchema = z.object({
+  photoUrl: z.string().url(),
+  capturedAt: z.string(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  accuracyMeters: z.number().min(0).optional(),
+  captureMethod: z.enum(["camera_capture", "file_upload"]),
+  locationVerified: z.boolean(),
 });
+
+export const retailVisitSchema = z
+  .object({
+    retailerId: z.string().min(1),
+    employeeId: z.string().min(1),
+    visitDate: z.string(),
+    visitTime: z.string().min(1),
+    notes: z.string().optional(),
+    photoUrls: z.array(z.string().url()).default([]),
+    presenceProof: retailPresenceProofSchema.optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasProofPhoto = value.photoUrls.length > 0;
+    const hasPresence = Boolean(value.presenceProof?.locationVerified);
+    if (!hasProofPhoto || !hasPresence) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Live photo with verified location is required to submit a retail visit.",
+        path: ["presenceProof"],
+      });
+    }
+  });
 
 export const orderSchema = z.object({
   retailerId: z.string().min(1),
   employeeId: z.string().optional(),
+  metPersonName: z.string().min(2),
+  metPersonMobile: z.string().min(10).max(15),
   productName: z.string().min(2),
   quantity: z.coerce.number().int().positive(),
   followUpDate: z.string().optional(),

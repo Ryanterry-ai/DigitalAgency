@@ -18,19 +18,20 @@ import {
 import { mockDb } from "@/server/store/mock-db";
 
 const usingMock = env.isPreviewMode;
+const TEST_OTP_CODE = "123456";
+const forceStaticTestOtp = true;
+const allowTestBypass = forceStaticTestOtp || env.otpDevFallback;
 
 const hashOtp = (code: string) => crypto.createHash("sha256").update(code).digest("hex");
-const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const safeDate = (value?: string) => (value ? new Date(value).toISOString() : new Date().toISOString());
 
 const mapEmployeeName = (employeeId?: string) =>
   mockDb.employees.find((employee) => employee.id === employeeId)?.fullName;
 
-export async function requestOtp(mobile: string) {
+const ensureMockUserSession = (mobile: string) => {
   const cleanMobile = mobile.trim();
   let user = mockDb.users.get(cleanMobile);
-
   if (!user) {
     const employee = mockDb.employees.find((entry) => entry.mobile === cleanMobile);
     user = {
@@ -42,9 +43,15 @@ export async function requestOtp(mobile: string) {
     };
     mockDb.users.set(cleanMobile, user);
   }
+  return user;
+};
+
+export async function requestOtp(mobile: string) {
+  const cleanMobile = mobile.trim();
+  const user = ensureMockUserSession(cleanMobile);
 
   const existingOtp = mockDb.otpStore.get(cleanMobile);
-  if (existingOtp && existingOtp.expiresAt > Date.now()) {
+  if (!allowTestBypass && existingOtp && existingOtp.expiresAt > Date.now()) {
     return {
       ok: false as const,
       expiresAt: existingOtp.expiresAt,
@@ -52,7 +59,7 @@ export async function requestOtp(mobile: string) {
     };
   }
 
-  const code = env.otpDevFallback ? "123456" : generateOtp();
+  const code = allowTestBypass ? TEST_OTP_CODE : String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = Date.now() + env.OTP_EXPIRY_MINUTES * 60 * 1000;
   mockDb.otpStore.set(cleanMobile, {
     codeHash: hashOtp(code),
@@ -61,41 +68,48 @@ export async function requestOtp(mobile: string) {
   });
 
   if (!usingMock) {
-    try {
-      const dbUser = await prisma.user.upsert({
+    void prisma.user
+      .upsert({
         where: { mobile: cleanMobile },
         update: {},
         create: { mobile: cleanMobile, role: user.role },
+      })
+      .then((dbUser) =>
+        prisma.otpToken.create({
+          data: {
+            userId: dbUser.id,
+            codeHash: hashOtp(code),
+            expiresAt: new Date(expiresAt),
+          },
+        }),
+      )
+      .catch(() => {
+        // Keep login flow alive if DB is unavailable.
       });
-
-      await prisma.otpToken.create({
-        data: {
-          userId: dbUser.id,
-          codeHash: hashOtp(code),
-          expiresAt: new Date(expiresAt),
-        },
-      });
-    } catch {
-      // Keep login flow alive in preview mode if DB is unavailable.
-    }
   }
 
   return {
     ok: true as const,
     expiresAt,
-    devCode: env.otpDevFallback ? code : undefined,
+    devCode: allowTestBypass ? code : undefined,
   };
 }
 
 export async function verifyOtp(mobile: string, code: string): Promise<UserSession | null> {
   const cleanMobile = mobile.trim();
 
+  if (allowTestBypass && code === TEST_OTP_CODE) {
+    const session = ensureMockUserSession(cleanMobile);
+    mockDb.otpStore.delete(cleanMobile);
+    return session;
+  }
+
   const otp = mockDb.otpStore.get(cleanMobile);
   if (!otp) {
     return null;
   }
 
-  if (otp.expiresAt < Date.now()) {
+  if (!allowTestBypass && otp.expiresAt < Date.now()) {
     mockDb.otpStore.delete(cleanMobile);
     return null;
   }
@@ -355,18 +369,45 @@ export async function createRetailer(input: Omit<RetailerRecord, "id">) {
 }
 
 export async function listRetailVisits() {
-  return mockDb.retailVisits;
+  return mockDb.retailVisits.map((visit) => ({
+    ...visit,
+    proofStatus: visit.proofStatus ?? (visit.presenceProof?.locationVerified ? "verified" : "unverified"),
+  }));
 }
 
-export async function createRetailVisit(input: Omit<RetailVisitRecord, "id" | "employeeName" | "shopName">) {
+export async function createRetailVisit(
+  input: Omit<RetailVisitRecord, "id" | "employeeName" | "shopName" | "proofStatus">,
+) {
+  const normalizedPhotoUrls =
+    input.photoUrls.length > 0
+      ? input.photoUrls
+      : input.presenceProof?.photoUrl
+        ? [input.presenceProof.photoUrl]
+        : [];
+  const proofStatus = input.presenceProof?.locationVerified ? "verified" : "unverified";
+
   const record: RetailVisitRecord = {
     ...input,
+    photoUrls: normalizedPhotoUrls,
     id: mockDb.id("rv"),
     employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
     shopName: mockDb.retailers.find((retailer) => retailer.id === input.retailerId)?.shopName ?? "Unknown",
     visitDate: safeDate(input.visitDate),
+    proofStatus,
   };
   mockDb.retailVisits.unshift(record);
+
+  if (record.proofStatus !== "verified") {
+    mockDb.notifications.unshift({
+      id: mockDb.id("not"),
+      title: "Unverified retail visit",
+      message: `${record.employeeName} submitted a visit at ${record.shopName} without valid live location proof.`,
+      type: "system",
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   return record;
 }
 
@@ -387,7 +428,7 @@ export async function createOrder(input: Omit<OrderRecord, "id" | "employeeName"
     mockDb.notifications.unshift({
       id: mockDb.id("not"),
       title: "Follow-up scheduled",
-      message: `${record.shopName} follow-up set for ${new Date(record.followUpDate).toLocaleDateString("en-IN")}.`,
+      message: `${record.shopName} follow-up with ${record.metPersonName} set for ${new Date(record.followUpDate).toLocaleDateString("en-IN")}.`,
       type: "follow_up",
       isRead: false,
       createdAt: new Date().toISOString(),

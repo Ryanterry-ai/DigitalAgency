@@ -94,8 +94,8 @@ export default function LoginPage() {
         <div className="mt-5 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
           <p className="font-medium text-slate-700">Test Accounts</p>
           <p>Admin: 9876543210</p>
-          <p>Employee: 9988776655 / 9123456780</p>
-          <p>OTP (preview mode): 123456</p>
+          <p>Employee: 9988776655 / 9123456780 / 8865056535</p>
+          <p>OTP (testing for all mobiles): 123456</p>
         </div>
       </Card>
       </motion.div>
