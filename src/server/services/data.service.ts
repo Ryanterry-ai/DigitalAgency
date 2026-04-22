@@ -43,6 +43,15 @@ export async function requestOtp(mobile: string) {
     mockDb.users.set(cleanMobile, user);
   }
 
+  const existingOtp = mockDb.otpStore.get(cleanMobile);
+  if (existingOtp && existingOtp.expiresAt > Date.now()) {
+    return {
+      ok: false as const,
+      expiresAt: existingOtp.expiresAt,
+      remainingSeconds: Math.ceil((existingOtp.expiresAt - Date.now()) / 1000),
+    };
+  }
+
   const code = env.otpDevFallback ? "123456" : generateOtp();
   const expiresAt = Date.now() + env.OTP_EXPIRY_MINUTES * 60 * 1000;
   mockDb.otpStore.set(cleanMobile, {
@@ -72,7 +81,7 @@ export async function requestOtp(mobile: string) {
   }
 
   return {
-    ok: true,
+    ok: true as const,
     expiresAt,
     devCode: env.otpDevFallback ? code : undefined,
   };

@@ -13,6 +13,13 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await requestOtp(parsed.data.mobile);
+    if (!result.ok) {
+      return fail(
+        `OTP already sent. Please retry after ${result.remainingSeconds} seconds.`,
+        429,
+        result,
+      );
+    }
     return ok(result);
   } catch (error) {
     return fail("Unable to request OTP", 500, error instanceof Error ? error.message : undefined);
