@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 245 248 252;
+  --card: 255 255 255;
+  --ink: 14 25 42;
+  --muted: 98 113 137;
+  --line: 224 230 239;
+  --brand: 14 116 144;
+  --brand-soft: 232 248 251;
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+  --motion-fast: 160ms;
+  --motion-base: 240ms;
+  --motion-slow: 340ms;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: rgb(var(--ink));
+  background:
+    radial-gradient(circle at 2% -2%, rgba(14, 116, 144, 0.08), transparent 28%),
+    radial-gradient(circle at 90% 0%, rgba(14, 116, 144, 0.08), transparent 24%),
+    rgb(var(--bg));
+  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+}
+
+* {
+  border-color: rgb(var(--line));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border bg-white/95 backdrop-blur shadow-[0_10px_28px_rgba(15,23,42,.06)];
+    transition:
+      box-shadow var(--motion-base) var(--motion-ease),
+      transform var(--motion-fast) var(--motion-ease);
+  }
+
+  .panel-muted {
+    @apply rounded-xl border bg-white/70;
+  }
+}

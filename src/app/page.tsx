@@ -1,0 +1,12 @@
+import { redirect } from "next/navigation";
+
+import { getCurrentSession } from "@/lib/auth/current-user";
+
+export default async function HomePage() {
+  const session = await getCurrentSession();
+  if (session) {
+    redirect("/dashboard");
+  }
+
+  redirect("/login");
+}
