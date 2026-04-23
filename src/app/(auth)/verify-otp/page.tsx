@@ -1,15 +1,5 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import { VerifyOtpClient } from "@/app/(auth)/verify-otp/verify-otp-client";
-
-export default function VerifyOtpPage({
-  searchParams,
-}: {
-  searchParams: { mobile?: string };
-}) {
-  return (
-    <Suspense>
-      <VerifyOtpClient mobile={searchParams.mobile ?? ""} />
-    </Suspense>
-  );
+export default function VerifyOtpPage() {
+  redirect("/login");
 }

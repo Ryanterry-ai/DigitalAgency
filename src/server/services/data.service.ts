@@ -43,6 +43,14 @@ const daysBetweenInclusive = (from: string, to: string) => {
 const mapEmployeeName = (employeeId?: string) =>
   mockDb.employees.find((employee) => employee.id === employeeId)?.fullName;
 
+const toSessionFromEmployee = (employee: EmployeeRecord): UserSession => ({
+  id: `usr_${employee.id}`,
+  mobile: employee.mobile,
+  role: employee.category === "admin" ? "admin" : "employee",
+  employeeId: employee.id,
+  name: employee.fullName,
+});
+
 const ensureMockUserSession = (mobile: string) => {
   const cleanMobile = mobile.trim();
   let user = mockDb.users.get(cleanMobile);
@@ -178,6 +186,94 @@ export async function verifyOtp(mobile: string, code: string): Promise<UserSessi
   }
 
   return session;
+}
+
+export async function loginWithPassword(input: {
+  role: "admin" | "employee";
+  identifier: string;
+  password: string;
+}): Promise<UserSession | null> {
+  const identifier = input.identifier.trim().toLowerCase();
+  const password = input.password.trim();
+  if (!identifier || !password) return null;
+
+  const matchedEmployee =
+    input.role === "admin"
+      ? mockDb.employees.find(
+          (employee) =>
+            employee.category === "admin" &&
+            employee.status === "active" &&
+            employee.email?.trim().toLowerCase() === identifier,
+        )
+      : mockDb.employees.find(
+          (employee) =>
+            employee.category !== "admin" &&
+            employee.status === "active" &&
+            employee.employeeCode.trim().toLowerCase() === identifier,
+        );
+
+  if (!matchedEmployee) {
+    return null;
+  }
+
+  const savedPassword = mockDb.passwordStore.get(matchedEmployee.id);
+  if (!savedPassword || savedPassword !== password) {
+    return null;
+  }
+
+  syncEmployeeUserAccount(matchedEmployee);
+  return toSessionFromEmployee(matchedEmployee);
+}
+
+export async function requestEmployeePasswordReset(employeeCode: string) {
+  const normalizedCode = employeeCode.trim().toLowerCase();
+  const employee = mockDb.employees.find(
+    (entry) => entry.employeeCode.trim().toLowerCase() === normalizedCode && entry.category !== "admin",
+  );
+
+  if (!employee) {
+    return {
+      success: true,
+      message: "If employee account exists, reset request has been shared with admin.",
+    };
+  }
+
+  mockDb.notifications.unshift({
+    id: mockDb.id("not"),
+    title: "Password reset requested",
+    message: `${employee.fullName} (${employee.employeeCode}) requested a password reset.`,
+    type: "system",
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    success: true,
+    message: "Reset request sent to admin. You will receive updated credentials soon.",
+  };
+}
+
+export async function resetEmployeePassword(employeeId: string, newPassword: string, resetBy: string) {
+  const employee = mockDb.employees.find((entry) => entry.id === employeeId);
+  if (!employee) {
+    return null;
+  }
+
+  mockDb.passwordStore.set(employee.id, newPassword);
+  mockDb.notifications.unshift({
+    id: mockDb.id("not"),
+    title: "Password reset completed",
+    message: `Password for ${employee.fullName} (${employee.employeeCode}) was reset by ${resetBy}.`,
+    type: "system",
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    employeeId: employee.id,
+    employeeName: employee.fullName,
+    resetAt: new Date().toISOString(),
+  };
 }
 
 export async function getDashboardOverview() {
@@ -334,6 +430,7 @@ export async function createEmployee(input: Omit<EmployeeRecord, "id">) {
     id: mockDb.id("emp"),
   };
   mockDb.employees.unshift(record);
+  mockDb.passwordStore.set(record.id, mockDb.DEFAULT_EMPLOYEE_PASSWORD);
   syncEmployeeUserAccount(record);
   return record;
 }
@@ -359,6 +456,7 @@ export async function deleteEmployee(id: string) {
   } else if (removed?.mobile && mockDb.users.get(removed.mobile)?.employeeId === id) {
     mockDb.users.delete(removed.mobile);
   }
+  mockDb.passwordStore.delete(id);
   return true;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, IdCard, Mail, MapPin, PencilLine, Phone, UserCircle2 } from "lucide-react";
+import { CalendarDays, IdCard, KeyRound, Mail, MapPin, PencilLine, Phone, UserCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export function EmployeeProfileModule() {
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<EmployeeForm | null>(null);
 
@@ -179,6 +180,42 @@ export function EmployeeProfileModule() {
     }
   };
 
+  const onResetPassword = async () => {
+    if (!selectedEmployee) return;
+    const nextPassword = window.prompt(
+      `Set new password for ${selectedEmployee.fullName} (${selectedEmployee.employeeCode})`,
+      "",
+    );
+    if (!nextPassword) return;
+
+    if (nextPassword.trim().length < 6) {
+      setError("Password must be at least 6 characters.");
+      setMessage(null);
+      return;
+    }
+
+    setResettingPassword(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/employees/${selectedEmployee.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: nextPassword.trim() }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || "Unable to reset password");
+      }
+
+      setMessage(`Password reset successful for ${selectedEmployee.fullName}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to reset password");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -247,10 +284,16 @@ export function EmployeeProfileModule() {
                   </div>
 
                   {!editing ? (
-                    <Button onClick={() => setEditing(true)}>
-                      <PencilLine size={14} className="mr-1" />
-                      Edit Details
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" loading={resettingPassword} onClick={onResetPassword}>
+                        <KeyRound size={14} className="mr-1" />
+                        Reset Password
+                      </Button>
+                      <Button onClick={() => setEditing(true)}>
+                        <PencilLine size={14} className="mr-1" />
+                        Edit Details
+                      </Button>
+                    </div>
                   ) : (
                     <div className="flex gap-2">
                       <Button variant="secondary" onClick={() => setEditing(false)}>

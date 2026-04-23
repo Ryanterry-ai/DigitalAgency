@@ -4,6 +4,20 @@ export const loginSchema = z.object({
   mobile: z.string().min(10).max(15),
 });
 
+export const passwordLoginSchema = z.object({
+  role: z.enum(["admin", "employee"]),
+  identifier: z.string().min(2),
+  password: z.string().min(6).max(64),
+});
+
+export const forgotPasswordSchema = z.object({
+  employeeCode: z.string().min(2),
+});
+
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6).max(64),
+});
+
 export const verifyOtpSchema = z.object({
   mobile: z.string().min(10).max(15),
   code: z.string().length(6),

@@ -456,6 +456,14 @@ const notifications: NotificationRecord[] = [
 ];
 
 const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts: number }>();
+const DEFAULT_EMPLOYEE_PASSWORD = "123456";
+const DEFAULT_ADMIN_PASSWORD = "Admin@123";
+const passwordStore = new Map<string, string>(
+  employees.map((employee) => [
+    employee.id,
+    employee.category === "admin" ? DEFAULT_ADMIN_PASSWORD : DEFAULT_EMPLOYEE_PASSWORD,
+  ]),
+);
 
 const users = new Map<string, UserSession>([
   [
@@ -503,6 +511,9 @@ export const mockDb = {
   id,
   users,
   otpStore,
+  passwordStore,
+  DEFAULT_EMPLOYEE_PASSWORD,
+  DEFAULT_ADMIN_PASSWORD,
   employees,
   atmSites,
   attendance,
