@@ -37,12 +37,12 @@ export default async function AdvanceRequestsPage() {
       title="Salary Advance Requests"
       description={
         isAdmin
-          ? "Admin review queue: open each request and approve or reject by updating status."
+          ? "Admin review queue for salary advance requests."
           : "Submit salary advance request. It will stay pending until admin approves/rejects it."
       }
       endpoint={isAdmin ? "/api/requests/advance" : "/api/requests/advance?scope=mine"}
       allowCreate={!isAdmin}
-      allowEdit={isAdmin}
+      allowEdit={false}
       fields={fields}
       columns={[
         { key: "employeeName", header: "Employee" },

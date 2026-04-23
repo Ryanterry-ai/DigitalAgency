@@ -11,7 +11,7 @@ export default async function RetailersPage() {
       description="Track all retailer stores, owner contacts, and territory coverage."
       endpoint="/api/retail/retailers"
       allowCreate={isAdmin}
-      allowEdit={isAdmin}
+      allowEdit={false}
       fields={[
         { name: "shopName", label: "Shop Name", required: true },
         { name: "ownerName", label: "Owner Name", required: true },

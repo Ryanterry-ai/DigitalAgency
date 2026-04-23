@@ -17,7 +17,6 @@ export default async function EmployeesPage() {
           description="Fill all required fields to create employee profiles. New employee creation also prepares their login account."
           endpoint="/api/employees"
           allowDelete
-          allowEdit
           createButtonLabel="Create Employee Profile"
           fields={[
             { name: "employeeCode", label: "Employee ID", required: true },
