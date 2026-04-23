@@ -12,8 +12,8 @@ export default async function EmployeesPage() {
   return (
     <div className="space-y-4">
       <ResourceModule
-        title="Employee Management"
-        description="Create, edit, and manage employee profiles. New employee creation also prepares their mobile login account."
+        title="Create New Employee Profile"
+        description="Fill all required fields to create employee profiles. New employee creation also prepares their mobile login account."
         endpoint="/api/employees"
         allowDelete
         allowEdit
