@@ -1,12 +1,12 @@
 export const DASHBOARD_THEMES = [
-  { id: "midnight_cyan", label: "Midnight Cyan" },
-  { id: "carbon_amber", label: "Carbon Amber" },
+  { id: "enterprise_amber", label: "Enterprise Amber" },
+  { id: "graphite_cyan", label: "Graphite Cyan" },
   { id: "emerald_night", label: "Emerald Night" },
 ] as const;
 
 export type DashboardThemeId = (typeof DASHBOARD_THEMES)[number]["id"];
 
-export const DEFAULT_DASHBOARD_THEME: DashboardThemeId = "midnight_cyan";
+export const DEFAULT_DASHBOARD_THEME: DashboardThemeId = "enterprise_amber";
 
 export const DASHBOARD_THEME_STORAGE_KEY = "sai_dashboard_theme";
 

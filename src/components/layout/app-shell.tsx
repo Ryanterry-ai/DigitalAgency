@@ -40,8 +40,8 @@ export function AppShell({
 
   return (
     <div className="dashboard-theme flex min-h-screen" data-dashboard-theme={theme}>
-      <div className="hidden w-72 border-r border-white/10 bg-white/5 md:block">
-        <Sidebar role={role} />
+      <div className="hidden w-56 border-r border-[#333333] bg-[#222222] md:block">
+        <Sidebar role={role} name={name} />
       </div>
 
       <AnimatePresence>
@@ -55,13 +55,13 @@ export function AppShell({
           >
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div
-              className="absolute inset-y-0 left-0 w-72 border-r border-white/10 bg-[#0f1729]/95 shadow-2xl"
+              className="absolute inset-y-0 left-0 w-56 border-r border-[#333333] bg-[#222222]/95"
               initial={reduceMotion ? undefined : "hidden"}
               animate={reduceMotion ? undefined : "visible"}
               exit={reduceMotion ? undefined : "exit"}
               variants={reduceMotion ? undefined : drawerMotion.panel}
             >
-              <Sidebar role={role} onNavigate={() => setOpen(false)} />
+              <Sidebar role={role} name={name} onNavigate={() => setOpen(false)} />
             </motion.div>
           </motion.div>
         ) : null}

@@ -1,9 +1,9 @@
 import type { Transition, Variants } from "framer-motion";
 
 export const MOTION = {
-  fast: 0.16,
-  base: 0.24,
-  slow: 0.34,
+  fast: 0.2,
+  base: 0.2,
+  slow: 0.28,
   stagger: 0.045,
   ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
 };

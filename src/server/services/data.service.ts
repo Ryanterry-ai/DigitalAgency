@@ -156,12 +156,32 @@ export async function getDashboardOverview() {
     { label: "W4", visits: metrics.retailVisits, orders: metrics.ordersBooked },
   ];
 
+  const recentTransactions = mockDb.orders.slice(0, 8).map((order, index) => {
+    const unitPrice = 1800 + ((index + 2) % 5) * 450;
+    const total = unitPrice * order.quantity;
+    return {
+      id: order.id.toUpperCase(),
+      customer: order.shopName,
+      product: order.productName,
+      status:
+        order.orderStatus === "canceled"
+          ? ("refunded" as const)
+          : order.orderStatus === "new"
+            ? ("pending" as const)
+            : ("success" as const),
+      quantity: order.quantity,
+      unitPrice,
+      total,
+    };
+  });
+
   return {
     metrics,
     issueTrend,
     retailTrend,
     expenseByType,
     recentNotifications: mockDb.notifications.slice(0, 6),
+    recentTransactions,
   };
 }
 
