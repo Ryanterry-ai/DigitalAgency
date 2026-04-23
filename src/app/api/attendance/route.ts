@@ -25,6 +25,15 @@ export async function POST(request: NextRequest) {
       return fail("Invalid attendance payload", 422, parsed.error.flatten());
     }
 
+    if (session.role === "employee") {
+      if (!parsed.data.selfieUrl) {
+        return fail("Selfie photo is required for employee attendance", 422);
+      }
+      if (!parsed.data.location?.trim()) {
+        return fail("Location is required for employee attendance", 422);
+      }
+    }
+
     return ok(await punchAttendance(parsed.data));
   } catch (error) {
     return fail("Unable to update attendance", 500, error instanceof Error ? error.message : undefined);

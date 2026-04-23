@@ -52,6 +52,11 @@ export const attendanceSchema = z.object({
   attendanceDate: z.string().min(4),
   punchType: z.enum(["in", "out"]),
   location: z.string().optional(),
+  selfieUrl: z.string().url().optional(),
+  capturedAt: z.string().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  locationAccuracy: z.coerce.number().min(0).optional(),
 });
 
 export const expenseSchema = z.object({

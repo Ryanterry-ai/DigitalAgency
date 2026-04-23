@@ -56,6 +56,22 @@ export type AttendanceRecord = {
   punchOut?: string;
   punchInLocation?: string;
   punchOutLocation?: string;
+  punchInProof?: {
+    selfieUrl: string;
+    capturedAt: string;
+    location?: string;
+    latitude?: number;
+    longitude?: number;
+    accuracyMeters?: number;
+  };
+  punchOutProof?: {
+    selfieUrl: string;
+    capturedAt: string;
+    location?: string;
+    latitude?: number;
+    longitude?: number;
+    accuracyMeters?: number;
+  };
   workingMinutes?: number;
   status: "present" | "absent" | "half_day";
 };
@@ -208,4 +224,16 @@ export type FlmTaskRecord = {
   siteOrArea?: string;
   status: FlmTaskStatus;
   notes?: string;
+};
+
+export type PasswordResetRequestRecord = {
+  id: string;
+  employeeId: string;
+  employeeCode: string;
+  employeeName: string;
+  mobile: string;
+  requestedAt: string;
+  status: "pending" | "completed";
+  resolvedAt?: string;
+  resolvedBy?: string;
 };

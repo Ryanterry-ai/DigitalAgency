@@ -10,8 +10,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDate } from "@/lib/utils";
-import type { EmployeeRecord } from "@/types/entities";
+import { formatDate, formatDateTime } from "@/lib/utils";
+import type { EmployeeRecord, PasswordResetRequestRecord } from "@/types/entities";
 
 type EmployeeForm = {
   employeeCode: string;
@@ -58,6 +58,9 @@ export function EmployeeProfileModule() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [pendingResetRequests, setPendingResetRequests] = useState<PasswordResetRequestRecord[]>([]);
+  const [loadingResetRequests, setLoadingResetRequests] = useState(true);
+  const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<EmployeeForm | null>(null);
 
@@ -86,8 +89,25 @@ export function EmployeeProfileModule() {
     }
   };
 
+  const loadResetRequests = async () => {
+    setLoadingResetRequests(true);
+    try {
+      const response = await fetch("/api/password-reset-requests?status=pending", { cache: "no-store" });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || "Unable to fetch password reset requests");
+      }
+      setPendingResetRequests(json.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to fetch password reset requests");
+    } finally {
+      setLoadingResetRequests(false);
+    }
+  };
+
   useEffect(() => {
     loadEmployees();
+    loadResetRequests();
   }, []);
 
   const filteredEmployees = useMemo(() => {
@@ -216,6 +236,45 @@ export function EmployeeProfileModule() {
     }
   };
 
+  const onResolveResetRequest = async (request: PasswordResetRequestRecord) => {
+    const manualPassword = window.prompt(
+      `Reset password for ${request.employeeName} (${request.employeeCode}). Leave empty to auto-generate.`,
+      "",
+    );
+    if (manualPassword === null) return;
+
+    const trimmed = manualPassword.trim();
+    if (trimmed && trimmed.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setMessage(null);
+      return;
+    }
+
+    setResolvingRequestId(request.id);
+    setError(null);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/password-reset-requests/${request.id}/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: trimmed || undefined }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || "Unable to resolve password reset request");
+      }
+
+      setMessage(
+        `Password reset completed for ${request.employeeName}. ${json.data?.smsMessage ?? "SMS notification logged."}`,
+      );
+      await loadResetRequests();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to resolve password reset request");
+    } finally {
+      setResolvingRequestId(null);
+    }
+  };
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -244,6 +303,39 @@ export function EmployeeProfileModule() {
       {loading ? <p className="text-sm text-slate-500">Loading employee details...</p> : null}
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
+      <div className="mb-4 rounded-xl border bg-slate-50 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-900">Pending Password Reset Requests</p>
+          <Badge tone={pendingResetRequests.length > 0 ? "warning" : "neutral"}>{pendingResetRequests.length}</Badge>
+        </div>
+        {loadingResetRequests ? (
+          <p className="mt-2 text-xs text-slate-500">Loading reset requests...</p>
+        ) : pendingResetRequests.length === 0 ? (
+          <p className="mt-2 text-xs text-slate-500">No pending reset requests right now.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {pendingResetRequests.map((request) => (
+              <div key={request.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-white p-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    {request.employeeName} ({request.employeeCode})
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Mobile: {request.mobile} | Requested: {formatDateTime(request.requestedAt)}
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  loading={resolvingRequestId === request.id}
+                  onClick={() => onResolveResetRequest(request)}
+                >
+                  Reset & Send SMS
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {!loading && !error ? (
         filteredEmployees.length === 0 ? (

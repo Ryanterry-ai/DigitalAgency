@@ -141,8 +141,8 @@ export default function LoginPage() {
           </form>
 
           <form className="mt-4 rounded-lg border bg-slate-50 p-3" onSubmit={onForgotPassword}>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Forgot Password?</p>
-            <p className="mt-1 text-xs text-slate-500">Employees can request password reset from admin.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Forgot Password / Reset Password</p>
+            <p className="mt-1 text-xs text-slate-500">Enter employee ID and tap Reset Password. Admin will receive request in dashboard.</p>
             <div className="mt-2 flex gap-2">
               <Input
                 placeholder="Employee ID"
@@ -151,7 +151,7 @@ export default function LoginPage() {
                 required
               />
               <Button type="submit" variant="secondary" loading={forgotLoading}>
-                Request
+                Reset Password
               </Button>
             </div>
           </form>

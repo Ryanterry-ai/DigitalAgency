@@ -9,6 +9,7 @@
   LeaveRequestRecord,
   NotificationRecord,
   OrderRecord,
+  PasswordResetRequestRecord,
   RetailerRecord,
   RetailVisitRecord,
   SalaryRecord,
@@ -218,6 +219,15 @@ const attendance: AttendanceRecord[] = [
     employeeName: "Roktaash Chahar",
     attendanceDate: now.toISOString(),
     punchIn: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 12).toISOString(),
+    punchInLocation: "27.4924, 77.6737 (+/-18m)",
+    punchInProof: {
+      selfieUrl: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=600&q=80",
+      capturedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 11).toISOString(),
+      location: "27.4924, 77.6737 (+/-18m)",
+      latitude: 27.4924,
+      longitude: 77.6737,
+      accuracyMeters: 18,
+    },
     status: "present",
   },
   {
@@ -226,6 +236,15 @@ const attendance: AttendanceRecord[] = [
     employeeName: "Manish Chahar",
     attendanceDate: now.toISOString(),
     punchIn: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 4).toISOString(),
+    punchInLocation: "27.1767, 78.0081 (+/-22m)",
+    punchInProof: {
+      selfieUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
+      capturedAt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 3).toISOString(),
+      location: "27.1767, 78.0081 (+/-22m)",
+      latitude: 27.1767,
+      longitude: 78.0081,
+      accuracyMeters: 22,
+    },
     status: "present",
   },
 ];
@@ -455,6 +474,8 @@ const notifications: NotificationRecord[] = [
   },
 ];
 
+const passwordResetRequests: PasswordResetRequestRecord[] = [];
+
 const otpStore = new Map<string, { codeHash: string; expiresAt: number; attempts: number }>();
 const DEFAULT_EMPLOYEE_PASSWORD = "123456";
 const DEFAULT_ADMIN_PASSWORD = "Admin@123";
@@ -527,6 +548,7 @@ export const mockDb = {
   leaveRequests,
   flmTasks,
   notifications,
+  passwordResetRequests,
   metricSnapshot,
 };
 

@@ -14,6 +14,7 @@ import {
   LeaveRequestRecord,
   NotificationRecord,
   OrderRecord,
+  PasswordResetRequestRecord,
   RetailerRecord,
   RetailVisitRecord,
   SalaryRecord,
@@ -28,6 +29,7 @@ const forceStaticTestOtp = true;
 const allowTestBypass = forceStaticTestOtp || env.otpDevFallback;
 
 const hashOtp = (code: string) => crypto.createHash("sha256").update(code).digest("hex");
+const generateTemporaryPassword = () => `Sai@${Math.floor(100000 + Math.random() * 900000)}`;
 
 const safeDate = (value?: string) => (value ? new Date(value).toISOString() : new Date().toISOString());
 const daysBetweenInclusive = (from: string, to: string) => {
@@ -238,10 +240,40 @@ export async function requestEmployeePasswordReset(employeeCode: string) {
     };
   }
 
+  const existingRequest = mockDb.passwordResetRequests.find(
+    (request) => request.employeeId === employee.id && request.status === "pending",
+  );
+  if (existingRequest) {
+    existingRequest.requestedAt = new Date().toISOString();
+    mockDb.notifications.unshift({
+      id: mockDb.id("not"),
+      title: "Password reset reminder",
+      message: `${employee.fullName} requested password reset again.`,
+      type: "system",
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+    return {
+      success: true,
+      message: "Reset request already pending with admin dashboard.",
+    };
+  }
+
+  const request: PasswordResetRequestRecord = {
+    id: mockDb.id("prr"),
+    employeeId: employee.id,
+    employeeCode: employee.employeeCode,
+    employeeName: employee.fullName,
+    mobile: employee.mobile,
+    requestedAt: new Date().toISOString(),
+    status: "pending",
+  };
+  mockDb.passwordResetRequests.unshift(request);
+
   mockDb.notifications.unshift({
     id: mockDb.id("not"),
     title: "Password reset requested",
-    message: `${employee.fullName} (${employee.employeeCode}) requested a password reset.`,
+    message: `${employee.fullName} (${employee.employeeCode}) requested a password reset. Mobile: ${employee.mobile}`,
     type: "system",
     isRead: false,
     createdAt: new Date().toISOString(),
@@ -249,7 +281,7 @@ export async function requestEmployeePasswordReset(employeeCode: string) {
 
   return {
     success: true,
-    message: "Reset request sent to admin. You will receive updated credentials soon.",
+    message: "Reset request sent to admin dashboard. You will receive updated credentials on SMS.",
   };
 }
 
@@ -260,6 +292,14 @@ export async function resetEmployeePassword(employeeId: string, newPassword: str
   }
 
   mockDb.passwordStore.set(employee.id, newPassword);
+  const pendingRequest = mockDb.passwordResetRequests.find(
+    (request) => request.employeeId === employee.id && request.status === "pending",
+  );
+  if (pendingRequest) {
+    pendingRequest.status = "completed";
+    pendingRequest.resolvedAt = new Date().toISOString();
+    pendingRequest.resolvedBy = resetBy;
+  }
   mockDb.notifications.unshift({
     id: mockDb.id("not"),
     title: "Password reset completed",
@@ -272,7 +312,51 @@ export async function resetEmployeePassword(employeeId: string, newPassword: str
   return {
     employeeId: employee.id,
     employeeName: employee.fullName,
+    mobile: employee.mobile,
     resetAt: new Date().toISOString(),
+  };
+}
+
+export async function listPasswordResetRequests(status: "pending" | "completed" | "all" = "pending") {
+  if (status === "all") return mockDb.passwordResetRequests;
+  return mockDb.passwordResetRequests.filter((request) => request.status === status);
+}
+
+export async function resolvePasswordResetRequest(requestId: string, resolvedBy: string, newPassword?: string) {
+  const request = mockDb.passwordResetRequests.find((entry) => entry.id === requestId);
+  if (!request || request.status !== "pending") {
+    return null;
+  }
+
+  const nextPassword = newPassword?.trim() || generateTemporaryPassword();
+  if (nextPassword.length < 6) {
+    throw new Error("Generated password is too short");
+  }
+
+  const resetResult = await resetEmployeePassword(request.employeeId, nextPassword, resolvedBy);
+  if (!resetResult) {
+    return null;
+  }
+
+  request.status = "completed";
+  request.resolvedAt = new Date().toISOString();
+  request.resolvedBy = resolvedBy;
+
+  const smsMessage = `SMS sent to ${request.mobile}: Your temporary password is ${nextPassword}`;
+  mockDb.notifications.unshift({
+    id: mockDb.id("not"),
+    title: "Reset SMS dispatched",
+    message: smsMessage,
+    type: "system",
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    request,
+    temporaryPassword: nextPassword,
+    smsStatus: "simulated",
+    smsMessage,
   };
 }
 
@@ -514,9 +598,25 @@ export async function punchAttendance(payload: {
   attendanceDate: string;
   punchType: "in" | "out";
   location?: string;
+  selfieUrl?: string;
+  capturedAt?: string;
+  latitude?: number;
+  longitude?: number;
+  locationAccuracy?: number;
 }) {
   const employeeName = mapEmployeeName(payload.employeeId) ?? "Unknown";
   const dateIso = safeDate(payload.attendanceDate);
+  const proof =
+    payload.selfieUrl && payload.selfieUrl.trim().length > 0
+      ? {
+          selfieUrl: payload.selfieUrl,
+          capturedAt: safeDate(payload.capturedAt),
+          location: payload.location?.trim() || undefined,
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          accuracyMeters: payload.locationAccuracy,
+        }
+      : undefined;
 
   const existing = mockDb.attendance.find(
     (entry) =>
@@ -528,6 +628,9 @@ export async function punchAttendance(payload: {
     if (existing) {
       existing.punchIn = new Date().toISOString();
       existing.punchInLocation = payload.location;
+      if (proof) {
+        existing.punchInProof = proof;
+      }
       return existing;
     }
 
@@ -538,6 +641,7 @@ export async function punchAttendance(payload: {
       attendanceDate: dateIso,
       punchIn: new Date().toISOString(),
       punchInLocation: payload.location,
+      punchInProof: proof,
       status: "present",
     };
     mockDb.attendance.unshift(record);
@@ -552,6 +656,7 @@ export async function punchAttendance(payload: {
       attendanceDate: dateIso,
       punchOut: new Date().toISOString(),
       punchOutLocation: payload.location,
+      punchOutProof: proof,
       status: "present",
     };
     mockDb.attendance.unshift(fallback);
@@ -560,6 +665,9 @@ export async function punchAttendance(payload: {
 
   existing.punchOut = new Date().toISOString();
   existing.punchOutLocation = payload.location;
+  if (proof) {
+    existing.punchOutProof = proof;
+  }
   if (existing.punchIn) {
     const minutes = Math.max(
       0,
