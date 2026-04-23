@@ -46,6 +46,42 @@ const ensureMockUserSession = (mobile: string) => {
   return user;
 };
 
+const findMockUserByEmployee = (employeeId: string): { mobile: string; user: UserSession } | null => {
+  let matched: { mobile: string; user: UserSession } | null = null;
+  mockDb.users.forEach((user, mobile) => {
+    if (!matched && user.employeeId === employeeId) {
+      matched = { mobile, user };
+    }
+  });
+  return matched;
+};
+
+const syncEmployeeUserAccount = (employee: EmployeeRecord, previousMobile?: string) => {
+  const employeeUser = findMockUserByEmployee(employee.id);
+  const nextMobile = employee.mobile.trim();
+  const oldMobile = previousMobile?.trim();
+
+  if (employeeUser && employeeUser.mobile !== nextMobile) {
+    mockDb.users.delete(employeeUser.mobile);
+  }
+
+  if (oldMobile && oldMobile !== nextMobile && mockDb.users.get(oldMobile)?.employeeId === employee.id) {
+    mockDb.users.delete(oldMobile);
+  }
+
+  const existingAtNextMobile = mockDb.users.get(nextMobile);
+  const baseId = employeeUser?.user.id ?? existingAtNextMobile?.id ?? mockDb.id("usr");
+  const role = existingAtNextMobile?.role === "admin" ? "admin" : "employee";
+
+  mockDb.users.set(nextMobile, {
+    id: baseId,
+    mobile: nextMobile,
+    role,
+    employeeId: employee.id,
+    name: employee.fullName,
+  });
+};
+
 export async function requestOtp(mobile: string) {
   const cleanMobile = mobile.trim();
   const user = ensureMockUserSession(cleanMobile);
@@ -203,6 +239,7 @@ export async function createEmployee(input: Omit<EmployeeRecord, "id">) {
     id: mockDb.id("emp"),
   };
   mockDb.employees.unshift(record);
+  syncEmployeeUserAccount(record);
   return record;
 }
 
@@ -210,14 +247,23 @@ export async function updateEmployee(id: string, patch: Partial<EmployeeRecord>)
   const index = mockDb.employees.findIndex((employee) => employee.id === id);
   if (index < 0) return null;
 
-  mockDb.employees[index] = { ...mockDb.employees[index], ...patch };
+  const previous = mockDb.employees[index];
+  const merged = { ...previous, ...patch };
+  mockDb.employees[index] = merged;
+  syncEmployeeUserAccount(merged, previous.mobile);
   return mockDb.employees[index];
 }
 
 export async function deleteEmployee(id: string) {
   const index = mockDb.employees.findIndex((employee) => employee.id === id);
   if (index < 0) return false;
-  mockDb.employees.splice(index, 1);
+  const [removed] = mockDb.employees.splice(index, 1);
+  const linked = findMockUserByEmployee(id);
+  if (linked) {
+    mockDb.users.delete(linked.mobile);
+  } else if (removed?.mobile && mockDb.users.get(removed.mobile)?.employeeId === id) {
+    mockDb.users.delete(removed.mobile);
+  }
   return true;
 }
 

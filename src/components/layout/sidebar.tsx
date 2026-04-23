@@ -65,14 +65,14 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
         <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 text-xs font-bold text-slate-950">
           SA
         </div>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Sai Associates</p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Sai Associates</p>
         <h1 className="mt-1 text-sm font-semibold text-slate-100">CRM Command Center</h1>
       </div>
 
       <nav className="flex-1 space-y-5 overflow-auto px-3 pb-4 pt-5">
         {NAV_GROUPS.map((group) => (
           <div key={group.title} className="space-y-1">
-            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{group.title}</p>
+            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">{group.title}</p>
             {group.items
               .filter((item) => !item.adminOnly || role === "admin")
               .map((item) => {
@@ -88,10 +88,10 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
                       "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition duration-200",
                       active
                         ? "border border-sky-400/25 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-sky-200"
-                        : "text-slate-300 hover:translate-x-[2px] hover:bg-white/10 hover:text-slate-50",
+                        : "text-slate-200 hover:translate-x-[2px] hover:bg-white/10 hover:text-slate-50",
                     )}
                   >
-                    <Icon size={15} className={cn(active ? "text-sky-300" : "text-slate-400 group-hover:text-slate-200")} />
+                    <Icon size={15} className={cn(active ? "text-sky-300" : "text-slate-300 group-hover:text-slate-100")} />
                     {item.label}
                   </Link>
                 );

@@ -3,7 +3,7 @@
 import type React from "react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ export function ResourceModule({
   columns,
   fields,
   allowDelete,
+  allowEdit,
 }: {
   title: string;
   description: string;
@@ -45,6 +46,7 @@ export function ResourceModule({
   columns: ColumnConfig[];
   fields: FieldConfig[];
   allowDelete?: boolean;
+  allowEdit?: boolean;
 }) {
   const isDateLikeString = (value: string) => {
     if (!value) return false;
@@ -60,9 +62,67 @@ export function ResourceModule({
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [highlightRowId, setHighlightRowId] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const mapRowToFormData = useCallback(
+    (row: Record<string, unknown>) => {
+      const mapped: Record<string, string> = {};
+
+      fields.forEach((field) => {
+        const rawValue = row[field.name];
+        if (rawValue === undefined || rawValue === null) {
+          mapped[field.name] = "";
+          return;
+        }
+
+        if (field.type === "date") {
+          const asString = String(rawValue);
+          if (/^\d{4}-\d{2}-\d{2}/.test(asString)) {
+            mapped[field.name] = asString.slice(0, 10);
+            return;
+          }
+          const parsed = new Date(asString);
+          mapped[field.name] = Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+          return;
+        }
+
+        if (field.type === "datetime-local") {
+          const parsed = new Date(String(rawValue));
+          if (Number.isNaN(parsed.getTime())) {
+            mapped[field.name] = "";
+            return;
+          }
+          const year = parsed.getFullYear();
+          const month = String(parsed.getMonth() + 1).padStart(2, "0");
+          const day = String(parsed.getDate()).padStart(2, "0");
+          const hours = String(parsed.getHours()).padStart(2, "0");
+          const minutes = String(parsed.getMinutes()).padStart(2, "0");
+          mapped[field.name] = `${year}-${month}-${day}T${hours}:${minutes}`;
+          return;
+        }
+
+        if (field.type === "file") {
+          const fallbackPhoto = Array.isArray(row.photoUrls) ? row.photoUrls[0] : "";
+          mapped[field.name] = String(rawValue || fallbackPhoto || "");
+          return;
+        }
+
+        mapped[field.name] = String(rawValue);
+      });
+
+      return mapped;
+    },
+    [fields],
+  );
+
+  const resetForm = useCallback(() => {
+    setOpenForm(false);
+    setFormData({});
+    setEditingRowId(null);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -117,8 +177,8 @@ export function ResourceModule({
         transformed.photoUrls = transformed.photoUrl ? [transformed.photoUrl] : [];
       }
 
-      const response = await fetch(endpoint, {
-        method: "POST",
+      const response = await fetch(editingRowId ? `${endpoint}/${editingRowId}` : endpoint, {
+        method: editingRowId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transformed),
       });
@@ -128,9 +188,8 @@ export function ResourceModule({
         throw new Error(json.message || "Unable to save record");
       }
 
-      setFormData({});
-      setOpenForm(false);
-      setHighlightRowId(String(json.data?.id ?? ""));
+      setHighlightRowId(String(json.data?.id ?? editingRowId ?? ""));
+      resetForm();
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save");
@@ -143,8 +202,20 @@ export function ResourceModule({
     if (!allowDelete) return;
     const response = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
     if (response.ok) {
+      if (editingRowId === id) {
+        resetForm();
+      }
       await loadData();
     }
+  };
+
+  const onEdit = (row: Record<string, unknown>) => {
+    const rowId = row.id;
+    if (!allowEdit || !rowId) return;
+    setError(null);
+    setFormData(mapRowToFormData(row));
+    setEditingRowId(String(rowId));
+    setOpenForm(true);
   };
 
   const onUpload = async (name: string, file: File | null) => {
@@ -186,7 +257,17 @@ export function ResourceModule({
                   className="pl-8"
                 />
               </div>
-              <Button onClick={() => setOpenForm((value) => !value)}>
+              <Button
+                onClick={() => {
+                  if (openForm) {
+                    resetForm();
+                    return;
+                  }
+                  setEditingRowId(null);
+                  setFormData({});
+                  setOpenForm(true);
+                }}
+              >
                 <Plus size={14} className="mr-1" />
                 {openForm ? "Close" : "Add Record"}
               </Button>
@@ -216,6 +297,11 @@ export function ResourceModule({
                 layout
                 className="mt-4 grid gap-3 border-t pt-4 md:grid-cols-2"
               >
+                <div className="md:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    {editingRowId ? "Editing existing record" : "Create a new record"}
+                  </p>
+                </div>
                 {fields.map((field) => {
                   const value = formData[field.name] ?? "";
                   const common = {
@@ -259,8 +345,14 @@ export function ResourceModule({
 
                 <div className="md:col-span-2">
                   <Button type="submit" loading={saving || Boolean(uploading)}>
-                    Save Record
+                    {editingRowId ? "Save Changes" : "Save Record"}
                   </Button>
+                  {editingRowId ? (
+                    <Button type="button" variant="secondary" className="ml-2" onClick={resetForm}>
+                      <X size={14} className="mr-1" />
+                      Cancel Edit
+                    </Button>
+                  ) : null}
                   {uploading ? (
                     <motion.div
                       className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-cyan-100"
@@ -300,7 +392,7 @@ export function ResourceModule({
                       {column.header}
                     </th>
                   ))}
-                  {allowDelete ? (
+                  {allowDelete || allowEdit ? (
                     <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-slate-500">Actions</th>
                   ) : null}
                 </tr>
@@ -309,13 +401,16 @@ export function ResourceModule({
               <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan={columns.length + (allowDelete ? 1 : 0)} className="px-4 py-8 text-center text-slate-500">
+                    <td
+                      colSpan={columns.length + (allowDelete || allowEdit ? 1 : 0)}
+                      className="px-4 py-8 text-center text-slate-500"
+                    >
                       Loading records...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length + (allowDelete ? 1 : 0)} className="px-3 py-4">
+                    <td colSpan={columns.length + (allowDelete || allowEdit ? 1 : 0)} className="px-3 py-4">
                       <EmptyState title="No records" description="Create your first record to start tracking this module." />
                     </td>
                   </tr>
@@ -366,15 +461,28 @@ export function ResourceModule({
                           </td>
                         );
                       })}
-                      {allowDelete ? (
+                      {allowDelete || allowEdit ? (
                         <td className="px-3 py-3 text-right">
-                          <button
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
-                            onClick={() => onDelete(String(row.id))}
-                            aria-label="Delete record"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="inline-flex items-center gap-1">
+                            {allowEdit ? (
+                              <button
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 hover:bg-sky-50"
+                                onClick={() => onEdit(row)}
+                                aria-label="Edit record"
+                              >
+                                <PencilLine size={14} />
+                              </button>
+                            ) : null}
+                            {allowDelete ? (
+                              <button
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
+                                onClick={() => onDelete(String(row.id))}
+                                aria-label="Delete record"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            ) : null}
+                          </div>
                         </td>
                       ) : null}
                     </motion.tr>

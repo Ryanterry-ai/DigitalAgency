@@ -13,9 +13,10 @@ export default async function EmployeesPage() {
     <div className="space-y-4">
       <ResourceModule
         title="Employee Management"
-        description="Create and manage employee profiles, assignment details, and activity visibility."
+        description="Create, edit, and manage employee profiles. New employee creation also prepares their mobile login account."
         endpoint="/api/employees"
         allowDelete
+        allowEdit
         fields={[
           { name: "employeeCode", label: "Employee ID", required: true },
           { name: "fullName", label: "Full Name", required: true },
@@ -37,6 +38,7 @@ export default async function EmployeesPage() {
         columns={[
           { key: "employeeCode", header: "ID" },
           { key: "fullName", header: "Name" },
+          { key: "email", header: "Email" },
           { key: "mobile", header: "Mobile" },
           { key: "location", header: "Location" },
           { key: "status", header: "Status" },
