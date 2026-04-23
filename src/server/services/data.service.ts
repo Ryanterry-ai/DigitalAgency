@@ -3,15 +3,19 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import {
+  AdvanceRequestRecord,
   AtmSiteRecord,
   AttendanceRecord,
   DashboardMetrics,
   EmployeeRecord,
   ExpenseRecord,
+  FlmTaskRecord,
+  LeaveRequestRecord,
   NotificationRecord,
   OrderRecord,
   RetailerRecord,
   RetailVisitRecord,
+  SalaryRecord,
   SiteVisitRecord,
   UserSession,
 } from "@/types/entities";
@@ -25,6 +29,15 @@ const allowTestBypass = forceStaticTestOtp || env.otpDevFallback;
 const hashOtp = (code: string) => crypto.createHash("sha256").update(code).digest("hex");
 
 const safeDate = (value?: string) => (value ? new Date(value).toISOString() : new Date().toISOString());
+const daysBetweenInclusive = (from: string, to: string) => {
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+    return 1;
+  }
+  const ms = Math.max(0, toDate.getTime() - fromDate.getTime());
+  return Math.floor(ms / (24 * 60 * 60 * 1000)) + 1;
+};
 
 const mapEmployeeName = (employeeId?: string) =>
   mockDb.employees.find((employee) => employee.id === employeeId)?.fullName;
@@ -37,7 +50,7 @@ const ensureMockUserSession = (mobile: string) => {
     user = {
       id: mockDb.id("usr"),
       mobile: cleanMobile,
-      role: employee ? "employee" : "employee",
+      role: employee?.category === "admin" ? "admin" : "employee",
       employeeId: employee?.id,
       name: employee?.fullName ?? "Field Employee",
     };
@@ -71,7 +84,7 @@ const syncEmployeeUserAccount = (employee: EmployeeRecord, previousMobile?: stri
 
   const existingAtNextMobile = mockDb.users.get(nextMobile);
   const baseId = employeeUser?.user.id ?? existingAtNextMobile?.id ?? mockDb.id("usr");
-  const role = existingAtNextMobile?.role === "admin" ? "admin" : "employee";
+  const role = employee.category === "admin" || existingAtNextMobile?.role === "admin" ? "admin" : "employee";
 
   mockDb.users.set(nextMobile, {
     id: baseId,
@@ -233,6 +246,11 @@ export async function listEmployees(search?: string) {
   );
 }
 
+export async function getEmployeeById(id?: string) {
+  if (!id) return null;
+  return mockDb.employees.find((employee) => employee.id === id) ?? null;
+}
+
 export async function createEmployee(input: Omit<EmployeeRecord, "id">) {
   const record: EmployeeRecord = {
     ...input,
@@ -390,6 +408,123 @@ export async function createExpense(input: Omit<ExpenseRecord, "id" | "employeeN
   };
 
   mockDb.expenses.unshift(record);
+  return record;
+}
+
+export async function listSalaryRecords(employeeId?: string) {
+  if (!employeeId) return mockDb.salaryRecords;
+  return mockDb.salaryRecords.filter((record) => record.employeeId === employeeId);
+}
+
+export async function createSalaryRecord(input: Omit<SalaryRecord, "id" | "employeeName" | "netSalary" | "updatedAt">) {
+  const record: SalaryRecord = {
+    ...input,
+    id: mockDb.id("sal"),
+    employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
+    netSalary: input.baseSalary + input.adjustment,
+    updatedAt: new Date().toISOString(),
+  };
+  mockDb.salaryRecords.unshift(record);
+  return record;
+}
+
+export async function updateSalaryRecord(id: string, patch: Partial<SalaryRecord>) {
+  const index = mockDb.salaryRecords.findIndex((record) => record.id === id);
+  if (index < 0) return null;
+
+  const current = mockDb.salaryRecords[index];
+  const nextEmployeeId = patch.employeeId ?? current.employeeId;
+  const nextBase = patch.baseSalary ?? current.baseSalary;
+  const nextAdjustment = patch.adjustment ?? current.adjustment;
+  const merged: SalaryRecord = {
+    ...current,
+    ...patch,
+    employeeId: nextEmployeeId,
+    employeeName: mapEmployeeName(nextEmployeeId) ?? current.employeeName,
+    netSalary: nextBase + nextAdjustment,
+    updatedAt: new Date().toISOString(),
+  };
+
+  mockDb.salaryRecords[index] = merged;
+  return merged;
+}
+
+export async function listAdvanceRequests(employeeId?: string) {
+  if (!employeeId) return mockDb.advanceRequests;
+  return mockDb.advanceRequests.filter((record) => record.employeeId === employeeId);
+}
+
+export async function createAdvanceRequest(
+  input: Omit<AdvanceRequestRecord, "id" | "employeeName" | "reviewedAt" | "reviewedBy">,
+) {
+  const record: AdvanceRequestRecord = {
+    ...input,
+    id: mockDb.id("adv"),
+    employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
+    requestDate: safeDate(input.requestDate),
+  };
+
+  mockDb.advanceRequests.unshift(record);
+  return record;
+}
+
+export async function listLeaveRequests(employeeId?: string) {
+  if (!employeeId) return mockDb.leaveRequests;
+  return mockDb.leaveRequests.filter((record) => record.employeeId === employeeId);
+}
+
+export async function createLeaveRequest(input: Omit<LeaveRequestRecord, "id" | "employeeName" | "totalDays">) {
+  const fromDate = safeDate(input.fromDate);
+  const toDate = safeDate(input.toDate);
+  const record: LeaveRequestRecord = {
+    ...input,
+    id: mockDb.id("leave"),
+    employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
+    fromDate,
+    toDate,
+    totalDays: daysBetweenInclusive(fromDate, toDate),
+  };
+
+  mockDb.leaveRequests.unshift(record);
+  return record;
+}
+
+export async function updateLeaveRequest(id: string, patch: Partial<LeaveRequestRecord>) {
+  const index = mockDb.leaveRequests.findIndex((record) => record.id === id);
+  if (index < 0) return null;
+
+  const current = mockDb.leaveRequests[index];
+  const nextEmployeeId = patch.employeeId ?? current.employeeId;
+  const nextFrom = patch.fromDate ? safeDate(patch.fromDate) : current.fromDate;
+  const nextTo = patch.toDate ? safeDate(patch.toDate) : current.toDate;
+  const merged: LeaveRequestRecord = {
+    ...current,
+    ...patch,
+    employeeId: nextEmployeeId,
+    employeeName: mapEmployeeName(nextEmployeeId) ?? current.employeeName,
+    fromDate: nextFrom,
+    toDate: nextTo,
+    totalDays: daysBetweenInclusive(nextFrom, nextTo),
+  };
+
+  mockDb.leaveRequests[index] = merged;
+  return merged;
+}
+
+export async function listFlmTasks(employeeId?: string) {
+  if (!employeeId) return mockDb.flmTasks;
+  return mockDb.flmTasks.filter((record) => record.employeeId === employeeId);
+}
+
+export async function createFlmTask(input: Omit<FlmTaskRecord, "id" | "employeeName">) {
+  const record: FlmTaskRecord = {
+    ...input,
+    id: mockDb.id("flm"),
+    employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
+    taskDate: safeDate(input.taskDate),
+  };
+
+  mockDb.flmTasks.unshift(record);
   return record;
 }
 

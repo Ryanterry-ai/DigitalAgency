@@ -14,6 +14,7 @@ export const employeeSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email().optional().or(z.literal("")),
   mobile: z.string().min(10),
+  category: z.enum(["admin", "atm", "crompton"]).default("atm"),
   location: z.string().optional(),
   joiningDate: z.string().optional(),
   status: z.enum(["active", "inactive"]),
@@ -118,4 +119,39 @@ export const notificationSchema = z.object({
   title: z.string().min(2),
   message: z.string().min(2),
   type: z.enum(["issue", "follow_up", "expense", "attendance", "system"]),
+});
+
+export const salarySchema = z.object({
+  employeeId: z.string().min(1),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  baseSalary: z.coerce.number().positive(),
+  adjustment: z.coerce.number().default(0),
+  status: z.enum(["pending", "paid", "hold"]).default("pending"),
+  remarks: z.string().optional(),
+});
+
+export const advanceRequestSchema = z.object({
+  employeeId: z.string().optional(),
+  requestDate: z.string(),
+  amount: z.coerce.number().positive(),
+  reason: z.string().min(2),
+  status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+});
+
+export const leaveRequestSchema = z.object({
+  employeeId: z.string().optional(),
+  leaveType: z.enum(["casual", "sick", "emergency", "other"]),
+  fromDate: z.string(),
+  toDate: z.string(),
+  reason: z.string().optional(),
+  status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+});
+
+export const flmTaskSchema = z.object({
+  employeeId: z.string().optional(),
+  taskDate: z.string(),
+  taskTitle: z.string().min(2),
+  siteOrArea: z.string().optional(),
+  status: z.enum(["pending", "in_progress", "completed"]),
+  notes: z.string().optional(),
 });

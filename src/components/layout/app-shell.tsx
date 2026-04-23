@@ -12,15 +12,17 @@ import {
   isDashboardThemeId,
 } from "@/lib/dashboard-theme";
 import { drawerMotion } from "@/lib/motion";
-import { Role } from "@/types/entities";
+import { EmployeeCategory, Role } from "@/types/entities";
 
 export function AppShell({
   role,
   name,
+  employeeCategory,
   children,
 }: {
   role: Role;
   name?: string;
+  employeeCategory?: EmployeeCategory;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -41,7 +43,7 @@ export function AppShell({
   return (
     <div className="dashboard-theme flex min-h-screen" data-dashboard-theme={theme}>
       <div className="hidden w-64 border-r border-white/10 bg-white/5 backdrop-blur-2xl md:block">
-        <Sidebar role={role} name={name} />
+        <Sidebar role={role} name={name} employeeCategory={employeeCategory} />
       </div>
 
       <AnimatePresence>
@@ -61,7 +63,7 @@ export function AppShell({
               exit={reduceMotion ? undefined : "exit"}
               variants={reduceMotion ? undefined : drawerMotion.panel}
             >
-              <Sidebar role={role} name={name} onNavigate={() => setOpen(false)} />
+              <Sidebar role={role} name={name} employeeCategory={employeeCategory} onNavigate={() => setOpen(false)} />
             </motion.div>
           </motion.div>
         ) : null}

@@ -16,11 +16,23 @@ export default async function EmployeesPage() {
         description="Create, edit, and manage employee profiles. New employee creation also prepares their mobile login account."
         endpoint="/api/employees"
         allowDelete
+        allowEdit
         fields={[
           { name: "employeeCode", label: "Employee ID", required: true },
           { name: "fullName", label: "Full Name", required: true },
           { name: "email", label: "Email" },
           { name: "mobile", label: "Mobile", required: true },
+          {
+            name: "category",
+            label: "Employee Category",
+            type: "select",
+            required: true,
+            options: [
+              { label: "ATM", value: "atm" },
+              { label: "Crompton", value: "crompton" },
+              { label: "Admin", value: "admin" },
+            ],
+          },
           { name: "location", label: "Location" },
           { name: "joiningDate", label: "Joining Date", type: "date" },
           {
@@ -39,6 +51,7 @@ export default async function EmployeesPage() {
           { key: "fullName", header: "Name" },
           { key: "email", header: "Email" },
           { key: "mobile", header: "Mobile" },
+          { key: "category", header: "Category" },
           { key: "location", header: "Location" },
           { key: "status", header: "Status" },
         ]}

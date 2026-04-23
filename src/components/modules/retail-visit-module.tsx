@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ExternalLink, MapPin, PencilLine, Plus, Search, ShieldCheck, X } from "lucide-react";
+import { ExternalLink, Eye, MapPin, Plus, Search, ShieldCheck, X } from "lucide-react";
 
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -507,11 +507,12 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                       <td className="px-3 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 transition hover:bg-sky-500/15"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md px-2 text-sky-600 transition hover:bg-sky-500/15"
                             onClick={() => openPreview(row)}
-                            aria-label="Edit record to view details"
+                            aria-label="View record details"
                           >
-                            <PencilLine size={14} />
+                            <Eye size={14} />
+                            <span className="text-xs font-medium">View Details</span>
                           </button>
                         </div>
                       </td>

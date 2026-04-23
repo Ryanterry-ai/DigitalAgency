@@ -3,7 +3,7 @@
 import type React from "react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { PencilLine, Plus, Search, Trash2, X } from "lucide-react";
+import { Eye, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 
-type FieldType = "text" | "number" | "date" | "datetime-local" | "select" | "textarea" | "file";
+export type FieldType = "text" | "number" | "date" | "datetime-local" | "select" | "textarea" | "file";
 
-type FieldConfig = {
+export type FieldConfig = {
   name: string;
   label: string;
   type?: FieldType;
@@ -38,6 +38,8 @@ export function ResourceModule({
   columns,
   fields,
   allowDelete,
+  allowCreate = true,
+  allowEdit = false,
 }: {
   title: string;
   description: string;
@@ -45,6 +47,8 @@ export function ResourceModule({
   columns: ColumnConfig[];
   fields: FieldConfig[];
   allowDelete?: boolean;
+  allowCreate?: boolean;
+  allowEdit?: boolean;
 }) {
   const isDateLikeString = (value: string) => {
     if (!value) return false;
@@ -65,6 +69,57 @@ export function ResourceModule({
   const [highlightRowId, setHighlightRowId] = useState<string | null>(null);
   const [previewRow, setPreviewRow] = useState<Record<string, unknown> | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const mapRowToFormData = useCallback(
+    (row: Record<string, unknown>) => {
+      const mapped: Record<string, string> = {};
+
+      fields.forEach((field) => {
+        const rawValue = row[field.name];
+        if (rawValue === undefined || rawValue === null) {
+          mapped[field.name] = "";
+          return;
+        }
+
+        if (field.type === "date") {
+          const asString = String(rawValue);
+          if (/^\d{4}-\d{2}-\d{2}/.test(asString)) {
+            mapped[field.name] = asString.slice(0, 10);
+            return;
+          }
+          const parsed = new Date(asString);
+          mapped[field.name] = Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+          return;
+        }
+
+        if (field.type === "datetime-local") {
+          const parsed = new Date(String(rawValue));
+          if (Number.isNaN(parsed.getTime())) {
+            mapped[field.name] = "";
+            return;
+          }
+          const year = parsed.getFullYear();
+          const month = String(parsed.getMonth() + 1).padStart(2, "0");
+          const day = String(parsed.getDate()).padStart(2, "0");
+          const hours = String(parsed.getHours()).padStart(2, "0");
+          const minutes = String(parsed.getMinutes()).padStart(2, "0");
+          mapped[field.name] = `${year}-${month}-${day}T${hours}:${minutes}`;
+          return;
+        }
+
+        if (field.type === "file") {
+          const fallbackPhoto = Array.isArray(row.photoUrls) ? row.photoUrls[0] : "";
+          mapped[field.name] = String(rawValue || fallbackPhoto || "");
+          return;
+        }
+
+        mapped[field.name] = String(rawValue);
+      });
+
+      return mapped;
+    },
+    [fields],
+  );
 
   const resetForm = useCallback(() => {
     setOpenForm(false);
@@ -158,6 +213,15 @@ export function ResourceModule({
   };
 
   const onEdit = (row: Record<string, unknown>) => {
+    const rowId = row.id;
+    if (allowEdit && rowId) {
+      setError(null);
+      setFormData(mapRowToFormData(row));
+      setEditingRowId(String(rowId));
+      setOpenForm(true);
+      return;
+    }
+
     setPreviewRow(row);
   };
 
@@ -257,20 +321,22 @@ export function ResourceModule({
                   className="pl-8"
                 />
               </div>
-              <Button
-                onClick={() => {
-                  if (openForm) {
-                    resetForm();
-                    return;
-                  }
-                  setEditingRowId(null);
-                  setFormData({});
-                  setOpenForm(true);
-                }}
-              >
-                <Plus size={14} className="mr-1" />
-                {openForm ? "Close" : "Add Record"}
-              </Button>
+              {allowCreate ? (
+                <Button
+                  onClick={() => {
+                    if (openForm) {
+                      resetForm();
+                      return;
+                    }
+                    setEditingRowId(null);
+                    setFormData({});
+                    setOpenForm(true);
+                  }}
+                >
+                  <Plus size={14} className="mr-1" />
+                  {openForm ? "Close" : "Add Record"}
+                </Button>
+              ) : null}
             </div>
           </div>
 
@@ -458,11 +524,12 @@ export function ResourceModule({
                       <td className="px-3 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 transition hover:bg-sky-500/15"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md px-2 text-sky-600 transition hover:bg-sky-500/15"
                             onClick={() => onEdit(row)}
-                            aria-label="Edit record to view details"
+                            aria-label={allowEdit ? "Edit record" : "Edit record to view details"}
                           >
-                            <PencilLine size={14} />
+                            {allowEdit ? <PencilLine size={14} /> : <Eye size={14} />}
+                            <span className="text-xs font-medium">{allowEdit ? "Edit" : "View Details"}</span>
                           </button>
                           {allowDelete ? (
                             <button
@@ -502,7 +569,11 @@ export function ResourceModule({
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">{title} Record Details</h3>
-                    <p className="text-xs text-slate-500">Edit record to view details only.</p>
+                    <p className="text-xs text-slate-500">
+                      {allowEdit
+                        ? "This module supports field editing."
+                        : "Edit action opens read-only details for this module."}
+                    </p>
                   </div>
                   <Button type="button" variant="ghost" onClick={closePreview}>
                     <X size={14} />

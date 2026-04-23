@@ -1,5 +1,6 @@
 export type Role = "admin" | "employee";
 export type ActiveStatus = "active" | "inactive";
+export type EmployeeCategory = "admin" | "atm" | "crompton";
 export type IssueStatus = "pending" | "resolved";
 export type IssueType =
   | "down"
@@ -25,6 +26,7 @@ export type EmployeeRecord = {
   fullName: string;
   email?: string;
   mobile: string;
+  category: EmployeeCategory;
   location?: string;
   joiningDate?: string;
   status: ActiveStatus;
@@ -146,4 +148,60 @@ export type DashboardMetrics = {
   retailVisits: number;
   ordersBooked: number;
   pendingFollowUps: number;
+};
+
+export type SalaryRecordStatus = "pending" | "paid" | "hold";
+
+export type SalaryRecord = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  month: string;
+  baseSalary: number;
+  adjustment: number;
+  netSalary: number;
+  status: SalaryRecordStatus;
+  remarks?: string;
+  updatedAt: string;
+};
+
+export type AdvanceRequestStatus = "pending" | "approved" | "rejected";
+
+export type AdvanceRequestRecord = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  requestDate: string;
+  amount: number;
+  reason: string;
+  status: AdvanceRequestStatus;
+  reviewedBy?: string;
+  reviewedAt?: string;
+};
+
+export type LeaveRequestType = "casual" | "sick" | "emergency" | "other";
+
+export type LeaveRequestRecord = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  leaveType: LeaveRequestType;
+  fromDate: string;
+  toDate: string;
+  totalDays: number;
+  reason?: string;
+  status: AdvanceRequestStatus;
+};
+
+export type FlmTaskStatus = "pending" | "in_progress" | "completed";
+
+export type FlmTaskRecord = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  taskDate: string;
+  taskTitle: string;
+  siteOrArea?: string;
+  status: FlmTaskStatus;
+  notes?: string;
 };
