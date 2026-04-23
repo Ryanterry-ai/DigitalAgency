@@ -26,6 +26,10 @@ export type EmployeeRecord = {
   fullName: string;
   email?: string;
   mobile: string;
+  completeAddress: string;
+  aadhaarNumber: string;
+  panNumber: string;
+  photoUrl: string;
   category: EmployeeCategory;
   location?: string;
   joiningDate?: string;

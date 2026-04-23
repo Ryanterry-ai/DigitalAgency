@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MapPin, PencilLine, UserCircle2 } from "lucide-react";
+import { IdCard, MapPin, PencilLine, UserCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
 import type { EmployeeRecord } from "@/types/entities";
 
@@ -18,6 +19,11 @@ type EmployeeProfileForm = {
   fullName: string;
   email: string;
   mobile: string;
+  completeAddress: string;
+  aadhaarNumber: string;
+  panNumber: string;
+  photoUrl: string;
+  category: "admin" | "atm" | "crompton";
   location: string;
   joiningDate: string;
   status: "active" | "inactive";
@@ -28,6 +34,11 @@ const mapToForm = (employee: EmployeeRecord): EmployeeProfileForm => ({
   fullName: employee.fullName ?? "",
   email: employee.email ?? "",
   mobile: employee.mobile ?? "",
+  completeAddress: employee.completeAddress ?? "",
+  aadhaarNumber: employee.aadhaarNumber ?? "",
+  panNumber: employee.panNumber ?? "",
+  photoUrl: employee.photoUrl ?? "",
+  category: employee.category ?? "atm",
   location: employee.location ?? "",
   joiningDate: employee.joiningDate ? employee.joiningDate.slice(0, 10) : "",
   status: employee.status ?? "active",
@@ -39,6 +50,7 @@ export function EmployeeProfileModule() {
   const [form, setForm] = useState<EmployeeProfileForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
@@ -87,13 +99,58 @@ export function EmployeeProfileModule() {
 
   const profileCompleteness = useMemo(() => {
     if (!form) return 0;
-    const checks = [form.employeeCode, form.fullName, form.mobile, form.email, form.location, form.joiningDate];
+    const checks = [
+      form.employeeCode,
+      form.fullName,
+      form.mobile,
+      form.completeAddress,
+      form.aadhaarNumber,
+      form.panNumber,
+      form.photoUrl,
+    ];
     const filled = checks.filter((value) => value.trim().length > 0).length;
     return Math.round((filled / checks.length) * 100);
   }, [form]);
 
+  const onUploadPhoto = async (file: File | null) => {
+    if (!file || !form) return;
+
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || "Photo upload failed");
+      }
+
+      setForm((current) => (current ? { ...current, photoUrl: json.data.url } : current));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Photo upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const onSave = async () => {
     if (!selectedEmployee || !form) return;
+    if (
+      !form.fullName.trim() ||
+      !form.mobile.trim() ||
+      !form.completeAddress.trim() ||
+      !form.aadhaarNumber.trim() ||
+      !form.panNumber.trim() ||
+      !form.photoUrl.trim()
+    ) {
+      setError("Name, Mobile, Complete Address, Aadhaar, PAN and Photo are required.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -120,12 +177,10 @@ export function EmployeeProfileModule() {
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Employee Profiles</h3>
-          <p className="text-sm text-slate-500">Select an employee to view and edit profile details for tracking.</p>
+          <p className="text-sm text-slate-500">Edit required KYC and profile details for each employee.</p>
         </div>
         {form ? (
-          <Badge tone={profileCompleteness >= 80 ? "success" : "warning"}>
-            Profile Complete {profileCompleteness}%
-          </Badge>
+          <Badge tone={profileCompleteness >= 80 ? "success" : "warning"}>Profile Complete {profileCompleteness}%</Badge>
         ) : null}
       </div>
 
@@ -170,8 +225,17 @@ export function EmployeeProfileModule() {
                   exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
                   className="space-y-4"
                 >
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-slate-50 p-3">
-                    <UserCircle2 size={16} className="text-cyan-700" />
+                  <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-slate-50 p-3">
+                    <div className="h-12 w-12 overflow-hidden rounded-full border bg-slate-200">
+                      {form.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={form.photoUrl} alt={selectedEmployee.fullName} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-slate-500">
+                          <UserCircle2 size={16} />
+                        </div>
+                      )}
+                    </div>
                     <span className="text-sm font-semibold text-slate-800">{selectedEmployee.fullName}</span>
                     <span className="text-xs text-slate-500">
                       Joined {selectedEmployee.joiningDate ? formatDate(selectedEmployee.joiningDate) : "-"}
@@ -179,6 +243,10 @@ export function EmployeeProfileModule() {
                     <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                       <MapPin size={12} />
                       {selectedEmployee.location || "Location not updated"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <IdCard size={12} />
+                      {selectedEmployee.category.toUpperCase()}
                     </span>
                   </div>
 
@@ -192,7 +260,7 @@ export function EmployeeProfileModule() {
                       />
                     </label>
                     <label className="space-y-1 text-sm text-slate-600">
-                      <span>Full Name</span>
+                      <span>Full Name *</span>
                       <Input
                         value={form.fullName}
                         onChange={(event) => setForm((current) => (current ? { ...current, fullName: event.target.value } : current))}
@@ -200,7 +268,7 @@ export function EmployeeProfileModule() {
                       />
                     </label>
                     <label className="space-y-1 text-sm text-slate-600">
-                      <span>Mobile</span>
+                      <span>Mobile *</span>
                       <Input
                         value={form.mobile}
                         onChange={(event) => setForm((current) => (current ? { ...current, mobile: event.target.value } : current))}
@@ -214,6 +282,46 @@ export function EmployeeProfileModule() {
                         onChange={(event) => setForm((current) => (current ? { ...current, email: event.target.value } : current))}
                         placeholder="employee@saiassociates.in"
                       />
+                    </label>
+                    <label className="space-y-1 text-sm text-slate-600">
+                      <span>Aadhaar Number *</span>
+                      <Input
+                        value={form.aadhaarNumber}
+                        onChange={(event) => setForm((current) => (current ? { ...current, aadhaarNumber: event.target.value } : current))}
+                        placeholder="12 digit Aadhaar"
+                        required
+                      />
+                    </label>
+                    <label className="space-y-1 text-sm text-slate-600">
+                      <span>PAN Number *</span>
+                      <Input
+                        value={form.panNumber}
+                        onChange={(event) =>
+                          setForm((current) =>
+                            current ? { ...current, panNumber: event.target.value.toUpperCase() } : current,
+                          )
+                        }
+                        placeholder="ABCDE1234F"
+                        required
+                      />
+                    </label>
+                    <label className="space-y-1 text-sm text-slate-600 md:col-span-2">
+                      <span>Complete Address *</span>
+                      <Textarea
+                        rows={3}
+                        value={form.completeAddress}
+                        onChange={(event) =>
+                          setForm((current) => (current ? { ...current, completeAddress: event.target.value } : current))
+                        }
+                        placeholder="Full current address with area, city and state"
+                        required
+                      />
+                    </label>
+                    <label className="space-y-1 text-sm text-slate-600 md:col-span-2">
+                      <span>Employee Photo *</span>
+                      <Input type="file" accept="image/*" onChange={(event) => onUploadPhoto(event.target.files?.[0] ?? null)} />
+                      {uploading ? <p className="text-xs text-cyan-600">Uploading photo...</p> : null}
+                      {form.photoUrl ? <p className="text-xs text-emerald-600">Photo linked</p> : null}
                     </label>
                     <label className="space-y-1 text-sm text-slate-600">
                       <span>Current Location</span>
@@ -231,7 +339,24 @@ export function EmployeeProfileModule() {
                         onChange={(event) => setForm((current) => (current ? { ...current, joiningDate: event.target.value } : current))}
                       />
                     </label>
-                    <label className="space-y-1 text-sm text-slate-600 md:col-span-2">
+                    <label className="space-y-1 text-sm text-slate-600">
+                      <span>Category</span>
+                      <Select
+                        value={form.category}
+                        onChange={(event) =>
+                          setForm((current) =>
+                            current
+                              ? { ...current, category: event.target.value as "admin" | "atm" | "crompton" }
+                              : current,
+                          )
+                        }
+                      >
+                        <option value="atm">ATM</option>
+                        <option value="crompton">Crompton</option>
+                        <option value="admin">Admin</option>
+                      </Select>
+                    </label>
+                    <label className="space-y-1 text-sm text-slate-600">
                       <span>Status</span>
                       <Select
                         value={form.status}
@@ -248,7 +373,7 @@ export function EmployeeProfileModule() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button loading={saving} onClick={onSave}>
+                    <Button loading={saving || uploading} onClick={onSave}>
                       <PencilLine size={14} className="mr-1" />
                       Save Profile
                     </Button>

@@ -1,14 +1,35 @@
 import { NextRequest } from "next/server";
 
-import { requireApiRole } from "@/lib/auth/api-session";
+import { requireApiRole, requireApiSession } from "@/lib/auth/api-session";
 import { fail, ok } from "@/lib/http";
 import { deleteEmployee, updateEmployee } from "@/server/services/data.service";
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireApiRole(["admin"]);
+    const session = await requireApiSession();
     const body = await request.json();
-    const record = await updateEmployee(params.id, body);
+
+    const canEditAsAdmin = session.role === "admin";
+    const canEditOwnProfile = session.role === "employee" && session.employeeId === params.id;
+
+    if (!canEditAsAdmin && !canEditOwnProfile) {
+      return fail("Forbidden", 403);
+    }
+
+    const patch = canEditAsAdmin
+      ? body
+      : {
+          fullName: body.fullName,
+          mobile: body.mobile,
+          completeAddress: body.completeAddress,
+          aadhaarNumber: body.aadhaarNumber,
+          panNumber: body.panNumber,
+          photoUrl: body.photoUrl,
+          location: body.location,
+          email: body.email,
+        };
+
+    const record = await updateEmployee(params.id, patch);
     if (!record) {
       return fail("Employee not found", 404);
     }
