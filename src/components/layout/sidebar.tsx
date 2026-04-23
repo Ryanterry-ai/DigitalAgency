@@ -61,18 +61,18 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
 
   return (
     <aside className="flex h-full flex-col">
-      <div className="border-b border-[#333333] px-4 pb-4 pt-5">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#e8822a] text-xs font-bold text-[#1a1a1a]">
+      <div className="border-b border-white/10 px-5 pb-5 pt-6">
+        <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 text-xs font-bold text-slate-950">
           SA
         </div>
-        <p className="mt-3 text-xs font-bold uppercase tracking-[0.1em] text-[#666666]">Sai Associates</p>
-        <h1 className="mt-1 text-sm font-semibold text-[#f9fafb]">Management System</h1>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Sai Associates</p>
+        <h1 className="mt-1 text-sm font-semibold text-slate-100">CRM Command Center</h1>
       </div>
 
-      <nav className="flex-1 space-y-4 overflow-auto px-3 pb-4 pt-4">
+      <nav className="flex-1 space-y-5 overflow-auto px-3 pb-4 pt-5">
         {NAV_GROUPS.map((group) => (
           <div key={group.title} className="space-y-1">
-            <p className="px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[#666666]">{group.title}</p>
+            <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{group.title}</p>
             {group.items
               .filter((item) => !item.adminOnly || role === "admin")
               .map((item) => {
@@ -85,13 +85,13 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition",
+                      "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition",
                       active
-                        ? "border border-[#e8822a]/20 bg-[#e8822a]/15 text-[#e8822a]"
-                        : "text-[#9ca3af] hover:bg-[#2a2a2a] hover:text-[#f9fafb]",
+                        ? "border border-sky-400/25 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-sky-200"
+                        : "text-slate-300 hover:bg-white/10 hover:text-slate-50",
                     )}
                   >
-                    <Icon size={15} />
+                    <Icon size={15} className={cn(active ? "text-sky-300" : "text-slate-400 group-hover:text-slate-200")} />
                     {item.label}
                   </Link>
                 );
@@ -100,18 +100,18 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
         ))}
       </nav>
 
-      <div className="border-t border-[#333333] p-3">
-        <div className="rounded-xl border border-[#2a2a2a] bg-[#222222] p-3">
+      <div className="border-t border-white/10 p-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl">
           <div className="flex items-center gap-2">
-            <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e8822a]/40 bg-[#1f1f1f] text-sm font-semibold text-[#f9fafb]">
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sky-300/40 bg-slate-800/70 text-sm font-semibold text-slate-100">
               {(name?.slice(0, 1) || "A").toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-[#f9fafb]">{name || "Admin User"}</p>
-              <p className="text-xs text-[#9ca3af]">{role === "admin" ? "Administrator" : "Employee"}</p>
+              <p className="text-sm font-medium text-slate-100">{name || "Admin User"}</p>
+              <p className="text-xs text-slate-400">{role === "admin" ? "Administrator" : "Employee"}</p>
             </div>
           </div>
-          <div className="mt-3 inline-flex rounded-full border border-[#e8822a]/35 bg-[#e8822a]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#e8822a]">
+          <div className="mt-3 inline-flex rounded-full border border-sky-300/30 bg-sky-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-200">
             Pro Plan
           </div>
         </div>

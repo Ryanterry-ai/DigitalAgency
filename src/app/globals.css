@@ -5,13 +5,13 @@
 @tailwind utilities;
 
 :root {
-  --bg: 26 26 26;
-  --card: 34 34 34;
-  --ink: 245 245 245;
-  --muted: 156 163 175;
-  --line: 42 42 42;
-  --brand: 232 130 42;
-  --brand-soft: 58 42 27;
+  --bg: 7 11 20;
+  --card: 15 23 42;
+  --ink: 244 248 255;
+  --muted: 148 163 184;
+  --line: 40 56 84;
+  --brand: 56 189 248;
+  --brand-soft: 20 34 62;
   --success: 22 163 74;
   --warning: 217 119 6;
   --danger: 220 38 38;
@@ -37,16 +37,17 @@ body {
 }
 
 .dashboard-theme {
-  --theme-bg-base: #1a1a1a;
-  --theme-bg-deep: #171717;
-  --theme-bg-glow-a: rgba(232, 130, 42, 0.18);
-  --theme-bg-glow-b: rgba(232, 130, 42, 0.08);
-  --theme-panel-bg: #222222;
-  --theme-panel-border: #2a2a2a;
-  --theme-ink-strong: #f9fafb;
-  --theme-ink: #d1d5db;
-  --theme-ink-soft: #9ca3af;
-  --theme-topbar-bg: rgba(34, 34, 34, 0.9);
+  --theme-bg-base: #070b14;
+  --theme-bg-deep: #0b1220;
+  --theme-bg-glow-a: rgba(56, 189, 248, 0.22);
+  --theme-bg-glow-b: rgba(99, 102, 241, 0.16);
+  --theme-panel-bg: rgba(15, 23, 42, 0.62);
+  --theme-panel-border: rgba(148, 163, 184, 0.22);
+  --theme-ink-strong: #f8fbff;
+  --theme-ink: #d4deef;
+  --theme-ink-soft: #9fb2d0;
+  --theme-topbar-bg: rgba(12, 19, 34, 0.72);
+  --theme-accent: #38bdf8;
   background:
     radial-gradient(circle at 12% 14%, var(--theme-bg-glow-a), transparent 33%),
     radial-gradient(circle at 82% 8%, var(--theme-bg-glow-b), transparent 30%),
@@ -60,8 +61,8 @@ body {
   inset: -12%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 20% 40%, rgba(232, 130, 42, 0.1), transparent 24%),
-    radial-gradient(circle at 70% 30%, rgba(232, 130, 42, 0.08), transparent 22%),
+    radial-gradient(circle at 20% 40%, rgba(56, 189, 248, 0.1), transparent 24%),
+    radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.09), transparent 22%),
     radial-gradient(circle at 50% 85%, rgba(255, 255, 255, 0.04), transparent 25%);
   filter: blur(24px);
   animation: dashboardGlow 18s ease-in-out infinite alternate;
@@ -73,46 +74,46 @@ body {
   z-index: 1;
 }
 
-.dashboard-theme[data-dashboard-theme="midnight_cyan"] {
-  --theme-bg-base: #101820;
-  --theme-bg-deep: #0f1c2c;
-  --theme-bg-glow-a: rgba(56, 189, 248, 0.17);
-  --theme-bg-glow-b: rgba(34, 211, 238, 0.1);
+.dashboard-theme[data-dashboard-theme="crm_midnight"] {
+  --theme-bg-base: #070b14;
+  --theme-bg-deep: #0b1220;
+  --theme-bg-glow-a: rgba(56, 189, 248, 0.22);
+  --theme-bg-glow-b: rgba(99, 102, 241, 0.16);
+  --theme-panel-bg: rgba(15, 23, 42, 0.62);
+  --theme-panel-border: rgba(148, 163, 184, 0.22);
+  --theme-accent: #38bdf8;
 }
 
-.dashboard-theme[data-dashboard-theme="enterprise_amber"] {
-  --theme-bg-base: #1a1a1a;
-  --theme-bg-deep: #171717;
-  --theme-bg-glow-a: rgba(232, 130, 42, 0.18);
-  --theme-bg-glow-b: rgba(232, 130, 42, 0.08);
-  --theme-panel-bg: #222222;
-  --theme-panel-border: #2a2a2a;
+.dashboard-theme[data-dashboard-theme="linear_graphite"] {
+  --theme-bg-base: #0f1117;
+  --theme-bg-deep: #171a22;
+  --theme-bg-glow-a: rgba(129, 140, 248, 0.18);
+  --theme-bg-glow-b: rgba(34, 197, 94, 0.14);
+  --theme-panel-bg: rgba(24, 28, 38, 0.66);
+  --theme-panel-border: rgba(148, 163, 184, 0.2);
+  --theme-accent: #818cf8;
 }
 
-.dashboard-theme[data-dashboard-theme="graphite_cyan"] {
-  --theme-bg-base: #131519;
-  --theme-bg-deep: #181f28;
-  --theme-bg-glow-a: rgba(45, 212, 191, 0.18);
-  --theme-bg-glow-b: rgba(56, 189, 248, 0.12);
-  --theme-panel-bg: #1e232c;
-  --theme-panel-border: #2f3b4c;
-}
-
-.dashboard-theme[data-dashboard-theme="emerald_night"] {
-  --theme-bg-base: #071312;
-  --theme-bg-deep: #0b1f27;
-  --theme-bg-glow-a: rgba(16, 185, 129, 0.22);
-  --theme-bg-glow-b: rgba(14, 165, 233, 0.18);
+.dashboard-theme[data-dashboard-theme="stripe_aurora"] {
+  --theme-bg-base: #0a1020;
+  --theme-bg-deep: #111f36;
+  --theme-bg-glow-a: rgba(34, 211, 238, 0.18);
+  --theme-bg-glow-b: rgba(16, 185, 129, 0.16);
+  --theme-panel-bg: rgba(15, 32, 58, 0.64);
+  --theme-panel-border: rgba(125, 211, 252, 0.2);
+  --theme-accent: #22d3ee;
 }
 
 .dashboard-theme .panel {
   background: var(--theme-panel-bg);
   border-color: var(--theme-panel-border);
-  box-shadow: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 24px rgba(2, 6, 23, 0.28);
 }
 
 .dashboard-theme .panel-muted {
-  background: rgba(15, 28, 49, 0.58);
+  background: rgba(20, 30, 54, 0.44);
   border-color: var(--theme-panel-border);
 }
 
@@ -137,7 +138,7 @@ body {
 .dashboard-theme .bg-slate-50,
 .dashboard-theme .bg-slate-100,
 .dashboard-theme .bg-slate-50\/80 {
-  background-color: var(--theme-panel-bg) !important;
+  background-color: rgba(15, 23, 42, 0.62) !important;
 }
 
 .dashboard-theme .border,
@@ -149,11 +150,11 @@ body {
 
 .dashboard-theme .hover\:bg-slate-100:hover,
 .dashboard-theme .hover\:bg-slate-50\/80:hover {
-  background-color: rgba(232, 130, 42, 0.12) !important;
+  background-color: rgba(56, 189, 248, 0.1) !important;
 }
 
 .dashboard-theme th {
-  background-color: #202020 !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
 }
 
 .dashboard-theme td {
@@ -177,11 +178,11 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #0b1220;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #4a4a4a;
+  background: #334155;
   border-radius: 999px;
 }
 

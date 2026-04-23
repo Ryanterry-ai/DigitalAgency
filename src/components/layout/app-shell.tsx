@@ -40,7 +40,7 @@ export function AppShell({
 
   return (
     <div className="dashboard-theme flex min-h-screen" data-dashboard-theme={theme}>
-      <div className="hidden w-56 border-r border-[#333333] bg-[#222222] md:block">
+      <div className="hidden w-64 border-r border-white/10 bg-white/5 backdrop-blur-2xl md:block">
         <Sidebar role={role} name={name} />
       </div>
 
@@ -55,7 +55,7 @@ export function AppShell({
           >
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div
-              className="absolute inset-y-0 left-0 w-56 border-r border-[#333333] bg-[#222222]/95"
+              className="absolute inset-y-0 left-0 w-64 border-r border-white/10 bg-slate-900/90 backdrop-blur-2xl"
               initial={reduceMotion ? undefined : "hidden"}
               animate={reduceMotion ? undefined : "visible"}
               exit={reduceMotion ? undefined : "exit"}
@@ -75,7 +75,7 @@ export function AppShell({
           theme={theme}
           onThemeChange={setTheme}
         />
-        <div className="p-4 md:p-6">{children}</div>
+        <div className="p-4 md:p-6 xl:p-7">{children}</div>
       </main>
     </div>
   );
