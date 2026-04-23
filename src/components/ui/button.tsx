@@ -11,7 +11,7 @@ export function Button({ className, variant = "primary", loading, children, disa
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 active:translate-y-[1px]",
+        "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 active:translate-y-[1px]",
         variant === "primary" &&
           "bg-gradient-to-r from-sky-400 to-indigo-500 text-slate-950 shadow-[0_6px_20px_rgba(56,189,248,.28)] hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(99,102,241,.35)] active:scale-[.99]",
         variant === "secondary" && "border border-white/10 bg-white/10 text-slate-100 hover:bg-white/15",

@@ -70,7 +70,7 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="hidden w-56 items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-2.5 py-1.5 lg:flex">
+        <label className="hidden w-56 items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-2.5 py-1.5 transition duration-200 hover:bg-white/15 lg:flex">
           <Search size={14} className="text-slate-400" />
           <input
             placeholder="Search..."
@@ -82,7 +82,7 @@ export function Topbar({
           </span>
         </label>
 
-        <label className="hidden items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-2.5 py-1.5 md:flex">
+        <label className="hidden items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-2.5 py-1.5 transition duration-200 hover:bg-white/15 md:flex">
           <Palette size={14} className="text-sky-300" />
           <select
             value={theme}
@@ -97,10 +97,10 @@ export function Topbar({
           </select>
         </label>
 
-        <button className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-slate-400 transition hover:text-sky-300">
+        <button className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-slate-400 transition duration-200 hover:-translate-y-[1px] hover:bg-white/15 hover:text-sky-300">
           <Bell size={14} />
         </button>
-        <button className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-slate-400 transition hover:text-sky-300">
+        <button className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-slate-400 transition duration-200 hover:-translate-y-[1px] hover:bg-white/15 hover:text-sky-300">
           <Monitor size={14} />
         </button>
 

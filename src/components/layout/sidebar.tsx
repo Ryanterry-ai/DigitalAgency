@@ -85,10 +85,10 @@ export function Sidebar({ role, onNavigate, name }: { role: Role; onNavigate?: (
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+                      "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition duration-200",
                       active
                         ? "border border-sky-400/25 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-sky-200"
-                        : "text-slate-300 hover:bg-white/10 hover:text-slate-50",
+                        : "text-slate-300 hover:translate-x-[2px] hover:bg-white/10 hover:text-slate-50",
                     )}
                   >
                     <Icon size={15} className={cn(active ? "text-sky-300" : "text-slate-400 group-hover:text-slate-200")} />

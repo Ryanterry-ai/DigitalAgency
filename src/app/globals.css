@@ -19,6 +19,13 @@
   --motion-base: 200ms;
   --motion-slow: 280ms;
   --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --field-bg: #ffffff;
+  --field-bg-hover: #f8fafc;
+  --field-border: #cbd5e1;
+  --field-text: #0f172a;
+  --field-placeholder: #64748b;
+  --field-focus: #0ea5e9;
+  --field-focus-ring: rgba(14, 165, 233, 0.2);
 }
 
 html,
@@ -48,6 +55,13 @@ body {
   --theme-ink-soft: #9fb2d0;
   --theme-topbar-bg: rgba(12, 19, 34, 0.72);
   --theme-accent: #38bdf8;
+  --field-bg: rgba(15, 23, 42, 0.72);
+  --field-bg-hover: rgba(30, 41, 59, 0.78);
+  --field-border: rgba(148, 163, 184, 0.28);
+  --field-text: #e5edf9;
+  --field-placeholder: #93a4c2;
+  --field-focus: #7dd3fc;
+  --field-focus-ring: rgba(56, 189, 248, 0.22);
   background:
     radial-gradient(circle at 12% 14%, var(--theme-bg-glow-a), transparent 33%),
     radial-gradient(circle at 82% 8%, var(--theme-bg-glow-b), transparent 30%),
@@ -161,6 +175,22 @@ body {
   background-color: transparent !important;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--field-text) !important;
+  caret-color: var(--field-text);
+  box-shadow: 0 0 0 1000px var(--field-bg) inset !important;
+  border-color: var(--field-focus) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 @keyframes dashboardGlow {
   0% {
     transform: translate3d(-1.2%, -0.8%, 0) scale(1);
@@ -206,7 +236,13 @@ body {
     @apply rounded-xl border bg-white/95 backdrop-blur;
     transition:
       box-shadow var(--motion-base) var(--motion-ease),
-      transform var(--motion-fast) var(--motion-ease);
+      transform var(--motion-fast) var(--motion-ease),
+      border-color var(--motion-base) var(--motion-ease);
+  }
+
+  .panel:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
   }
 
   .panel-muted {
