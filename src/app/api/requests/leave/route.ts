@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return fail("Employee is required", 422);
     }
 
-    return ok(await createLeaveRequest({ ...parsed.data, employeeId }));
+    return ok(await createLeaveRequest({ ...parsed.data, employeeId, status: "pending" }));
   } catch (error) {
     return fail("Unable to create leave request", 500, error instanceof Error ? error.message : undefined);
   }

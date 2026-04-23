@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Bar,
   BarChart,
@@ -44,29 +45,35 @@ export function OverviewCharts({ issueTrend, retailTrend, expenseByType }: Dashb
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         className="lg:col-span-8"
       >
-        <Card className="h-[330px] rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Sales Momentum</p>
-          <p className="mb-4 text-sm text-slate-300">Lead velocity vs closed outcomes by cycle.</p>
-          <ResponsiveContainer width="100%" height="82%">
-            <BarChart data={salesSeries} barGap={7}>
-              <CartesianGrid strokeDasharray="4 4" stroke="rgba(148,163,184,0.22)" vertical={false} />
-              <XAxis dataKey="month" stroke="#94a3b8" tickLine={false} axisLine={false} />
-              <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} />
-              <Tooltip
-                cursor={{ fill: "rgba(56,189,248,0.1)" }}
-                contentStyle={{
-                  background: "rgba(15, 23, 42, 0.9)",
-                  border: "1px solid rgba(148,163,184,.28)",
-                  borderRadius: "12px",
-                  color: "#e2e8f0",
-                }}
-              />
-              <ReferenceLine x={focusMonth} stroke="#38bdf8" strokeDasharray="4 4" />
-              <Bar dataKey="leads" fill="rgba(99,102,241,0.52)" radius={[6, 6, 0, 0]} isAnimationActive={!reduceMotion} />
-              <Bar dataKey="closes" fill="rgba(56,189,248,0.92)" radius={[6, 6, 0, 0]} isAnimationActive={!reduceMotion} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        <Link
+          href="/reports"
+          aria-label="Open sales momentum reports"
+          className="block rounded-2xl transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        >
+          <Card className="h-[330px] rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Sales Momentum</p>
+            <p className="mb-4 text-sm text-slate-300">Lead velocity vs closed outcomes by cycle.</p>
+            <ResponsiveContainer width="100%" height="82%">
+              <BarChart data={salesSeries} barGap={7}>
+                <CartesianGrid strokeDasharray="4 4" stroke="rgba(148,163,184,0.22)" vertical={false} />
+                <XAxis dataKey="month" stroke="#94a3b8" tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} />
+                <Tooltip
+                  cursor={{ fill: "rgba(56,189,248,0.1)" }}
+                  contentStyle={{
+                    background: "rgba(15, 23, 42, 0.9)",
+                    border: "1px solid rgba(148,163,184,.28)",
+                    borderRadius: "12px",
+                    color: "#e2e8f0",
+                  }}
+                />
+                <ReferenceLine x={focusMonth} stroke="#38bdf8" strokeDasharray="4 4" />
+                <Bar dataKey="leads" fill="rgba(99,102,241,0.52)" radius={[6, 6, 0, 0]} isAnimationActive={!reduceMotion} />
+                <Bar dataKey="closes" fill="rgba(56,189,248,0.92)" radius={[6, 6, 0, 0]} isAnimationActive={!reduceMotion} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </Link>
       </motion.div>
 
       <motion.div

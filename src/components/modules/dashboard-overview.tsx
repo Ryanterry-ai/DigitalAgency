@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { MoreHorizontal, Search } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -53,6 +54,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       delta: "+8.4%",
       bars: [34, 45, 63, 80, 94],
       gradient: "bg-gradient-to-br from-sky-500/35 via-cyan-500/20 to-slate-900/80",
+      href: "/atm/sites",
     },
     {
       title: "Pending Escalations",
@@ -61,6 +63,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       delta: "+2.1%",
       bars: [31, 42, 55, 72, 86],
       gradient: "bg-gradient-to-br from-amber-400/35 via-orange-500/20 to-slate-900/80",
+      href: "/atm/visits",
     },
     {
       title: "Visits Completed",
@@ -69,6 +72,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       delta: "+11.2%",
       bars: [36, 52, 66, 84, 95],
       gradient: "bg-gradient-to-br from-emerald-400/30 via-teal-500/20 to-slate-900/80",
+      href: "/retail/visits",
     },
     {
       title: "Orders Closed",
@@ -77,6 +81,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       delta: "+6.9%",
       bars: [29, 43, 60, 77, 91],
       gradient: "bg-gradient-to-br from-indigo-500/35 via-violet-500/20 to-slate-900/80",
+      href: "/retail/orders",
     },
   ];
 
@@ -100,7 +105,14 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       <FadeIn>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((item) => (
-            <MetricCard key={item.title} {...item} />
+            <Link
+              key={item.title}
+              href={item.href}
+              className="block rounded-2xl transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              aria-label={`Open ${item.title}`}
+            >
+              <MetricCard {...item} />
+            </Link>
           ))}
         </div>
       </FadeIn>

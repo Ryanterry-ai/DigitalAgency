@@ -8,42 +8,44 @@ export default async function AdvanceRequestsPage() {
   const employees = await listEmployees();
   const isAdmin = session?.role === "admin";
 
-  const fields: FieldConfig[] = [
-    ...(isAdmin
-      ? [
-          {
-            name: "employeeId",
-            label: "Employee",
-            type: "select" as const,
-            required: true,
-            options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-          },
-        ]
-      : []),
-    { name: "requestDate", label: "Request Date", type: "date", required: true },
-    { name: "amount", label: "Advance Amount", type: "number", required: true },
-    { name: "reason", label: "Reason", type: "textarea", required: true },
-    ...(isAdmin
-      ? [
-          {
-            name: "status",
-            label: "Status",
-            type: "select" as const,
-            options: [
-              { label: "Pending", value: "pending" },
-              { label: "Approved", value: "approved" },
-              { label: "Rejected", value: "rejected" },
-            ],
-          },
-        ]
-      : []),
-  ];
+  const fields: FieldConfig[] = isAdmin
+    ? [
+        {
+          name: "status",
+          label: "Approval Status",
+          type: "select",
+          required: true,
+          options: [
+            { label: "Pending", value: "pending" },
+            { label: "Approved", value: "approved" },
+            { label: "Rejected", value: "rejected" },
+          ],
+        },
+      ]
+    : [
+        {
+          name: "employeeId",
+          label: "Employee",
+          type: "select",
+          required: true,
+          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
+        },
+        { name: "requestDate", label: "Request Date", type: "date", required: true },
+        { name: "amount", label: "Advance Amount", type: "number", required: true },
+        { name: "reason", label: "Reason", type: "textarea", required: true },
+      ];
 
   return (
     <ResourceModule
       title="Salary Advance Requests"
-      description="Submit and track salary advance requests with approval status."
+      description={
+        isAdmin
+          ? "Admin review queue: open each request and approve or reject by updating status."
+          : "Submit salary advance request. It will stay pending until admin approves/rejects it."
+      }
       endpoint={isAdmin ? "/api/requests/advance" : "/api/requests/advance?scope=mine"}
+      allowCreate={!isAdmin}
+      allowEdit={isAdmin}
       fields={fields}
       columns={[
         { key: "employeeName", header: "Employee" },

@@ -39,7 +39,7 @@ const employees: EmployeeRecord[] = [
   {
     id: "emp_001",
     employeeCode: "SAI-EMP-101",
-    fullName: "Rakesh Chahar",
+    fullName: "Roktaash Chahar",
     email: "rakesh@saiassociates.in",
     mobile: "9988776655",
     completeAddress: "Vrindavan Road, Mathura, Uttar Pradesh",
@@ -69,7 +69,7 @@ const employees: EmployeeRecord[] = [
   {
     id: "emp_003",
     employeeCode: "SAI-EMP-103",
-    fullName: "Gulab Singh",
+    fullName: "Gulab Singla",
     email: "gulab@saiassociates.in",
     mobile: "8865056535",
     completeAddress: "Krishna Nagar, Mathura, Uttar Pradesh",
@@ -196,7 +196,7 @@ const atmSites: AtmSiteRecord[] = [
     address: "NH-2 Service Lane",
     city: "Mathura",
     assignedEmployeeId: "emp_001",
-    assignedEmployeeName: "Rakesh Chahar",
+    assignedEmployeeName: "Roktaash Chahar",
     status: "active",
   },
   {
@@ -215,7 +215,7 @@ const attendance: AttendanceRecord[] = [
   {
     id: "att_001",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     attendanceDate: now.toISOString(),
     punchIn: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 12).toISOString(),
     status: "present",
@@ -234,7 +234,7 @@ const expenses: ExpenseRecord[] = [
   {
     id: "exp_001",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     atmSiteId: "site_001",
     siteName: "SBI Highway ATM",
     expenseType: "maintenance",
@@ -263,7 +263,7 @@ const visits: SiteVisitRecord[] = [
     atmSiteId: "site_001",
     siteName: "SBI Highway ATM",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     issueType: "network_issue",
     expenseAmount: 450,
     notes: "Restarted router and checked link",
@@ -349,7 +349,7 @@ const orders: OrderRecord[] = [
     retailerId: "ret_002",
     shopName: "Goyal Traders",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     metPersonName: "Amit Goyal",
     metPersonMobile: "9877003344",
     productName: "Crompton LED Driver 24W",
@@ -364,7 +364,7 @@ const salaryRecords: SalaryRecord[] = [
   {
     id: "sal_001",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     month: "2026-04",
     baseSalary: 22000,
     adjustment: 1500,
@@ -391,7 +391,7 @@ const advanceRequests: AdvanceRequestRecord[] = [
   {
     id: "adv_001",
     employeeId: "emp_003",
-    employeeName: "Gulab Singh",
+    employeeName: "Gulab Singla",
     requestDate: now.toISOString(),
     amount: 3000,
     reason: "Emergency household medical expense",
@@ -409,7 +409,7 @@ const leaveRequests: LeaveRequestRecord[] = [
     toDate: new Date(now.getTime() + 2 * 24 * 3600000).toISOString(),
     totalDays: 3,
     reason: "Family function",
-    status: "approved",
+    status: "pending",
   },
 ];
 
@@ -417,7 +417,7 @@ const flmTasks: FlmTaskRecord[] = [
   {
     id: "flm_001",
     employeeId: "emp_001",
-    employeeName: "Rakesh Chahar",
+    employeeName: "Roktaash Chahar",
     taskDate: now.toISOString(),
     taskTitle: "Cash cassette health check",
     siteOrArea: "SBI Highway ATM",
@@ -464,7 +464,7 @@ const users = new Map<string, UserSession>([
   ],
   [
     "9988776655",
-    { id: "usr_emp_1", mobile: "9988776655", role: "employee", employeeId: "emp_001", name: "Rakesh Chahar" },
+    { id: "usr_emp_1", mobile: "9988776655", role: "employee", employeeId: "emp_001", name: "Roktaash Chahar" },
   ],
   [
     "9123456780",
@@ -472,7 +472,11 @@ const users = new Map<string, UserSession>([
   ],
   [
     "8865056535",
-    { id: "usr_emp_3", mobile: "8865056535", role: "employee", employeeId: "emp_003", name: "Gulab Singh" },
+    { id: "usr_emp_3", mobile: "8865056535", role: "employee", employeeId: "emp_003", name: "Gulab Singla" },
+  ],
+  [
+    "9557513017",
+    { id: "usr_client_1", mobile: "9557513017", role: "admin", employeeId: "emp_admin", name: "Client Admin" },
   ],
 ]);
 

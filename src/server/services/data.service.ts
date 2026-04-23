@@ -462,10 +462,28 @@ export async function createAdvanceRequest(
     id: mockDb.id("adv"),
     employeeName: mapEmployeeName(input.employeeId) ?? "Unknown",
     requestDate: safeDate(input.requestDate),
+    status: "pending",
   };
 
   mockDb.advanceRequests.unshift(record);
   return record;
+}
+
+export async function updateAdvanceRequest(id: string, patch: Partial<AdvanceRequestRecord>) {
+  const index = mockDb.advanceRequests.findIndex((record) => record.id === id);
+  if (index < 0) return null;
+
+  const current = mockDb.advanceRequests[index];
+  const nextEmployeeId = patch.employeeId ?? current.employeeId;
+  const merged: AdvanceRequestRecord = {
+    ...current,
+    ...patch,
+    employeeId: nextEmployeeId,
+    employeeName: mapEmployeeName(nextEmployeeId) ?? current.employeeName,
+  };
+
+  mockDb.advanceRequests[index] = merged;
+  return merged;
 }
 
 export async function listLeaveRequests(employeeId?: string) {
@@ -483,6 +501,7 @@ export async function createLeaveRequest(input: Omit<LeaveRequestRecord, "id" | 
     fromDate,
     toDate,
     totalDays: daysBetweenInclusive(fromDate, toDate),
+    status: "pending",
   };
 
   mockDb.leaveRequests.unshift(record);
