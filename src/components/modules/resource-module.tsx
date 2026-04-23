@@ -38,7 +38,6 @@ export function ResourceModule({
   columns,
   fields,
   allowDelete,
-  allowEdit,
 }: {
   title: string;
   description: string;
@@ -46,7 +45,6 @@ export function ResourceModule({
   columns: ColumnConfig[];
   fields: FieldConfig[];
   allowDelete?: boolean;
-  allowEdit?: boolean;
 }) {
   const isDateLikeString = (value: string) => {
     if (!value) return false;
@@ -65,58 +63,8 @@ export function ResourceModule({
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [highlightRowId, setHighlightRowId] = useState<string | null>(null);
+  const [previewRow, setPreviewRow] = useState<Record<string, unknown> | null>(null);
   const reduceMotion = useReducedMotion();
-
-  const mapRowToFormData = useCallback(
-    (row: Record<string, unknown>) => {
-      const mapped: Record<string, string> = {};
-
-      fields.forEach((field) => {
-        const rawValue = row[field.name];
-        if (rawValue === undefined || rawValue === null) {
-          mapped[field.name] = "";
-          return;
-        }
-
-        if (field.type === "date") {
-          const asString = String(rawValue);
-          if (/^\d{4}-\d{2}-\d{2}/.test(asString)) {
-            mapped[field.name] = asString.slice(0, 10);
-            return;
-          }
-          const parsed = new Date(asString);
-          mapped[field.name] = Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
-          return;
-        }
-
-        if (field.type === "datetime-local") {
-          const parsed = new Date(String(rawValue));
-          if (Number.isNaN(parsed.getTime())) {
-            mapped[field.name] = "";
-            return;
-          }
-          const year = parsed.getFullYear();
-          const month = String(parsed.getMonth() + 1).padStart(2, "0");
-          const day = String(parsed.getDate()).padStart(2, "0");
-          const hours = String(parsed.getHours()).padStart(2, "0");
-          const minutes = String(parsed.getMinutes()).padStart(2, "0");
-          mapped[field.name] = `${year}-${month}-${day}T${hours}:${minutes}`;
-          return;
-        }
-
-        if (field.type === "file") {
-          const fallbackPhoto = Array.isArray(row.photoUrls) ? row.photoUrls[0] : "";
-          mapped[field.name] = String(rawValue || fallbackPhoto || "");
-          return;
-        }
-
-        mapped[field.name] = String(rawValue);
-      });
-
-      return mapped;
-    },
-    [fields],
-  );
 
   const resetForm = useCallback(() => {
     setOpenForm(false);
@@ -210,13 +158,65 @@ export function ResourceModule({
   };
 
   const onEdit = (row: Record<string, unknown>) => {
-    const rowId = row.id;
-    if (!allowEdit || !rowId) return;
-    setError(null);
-    setFormData(mapRowToFormData(row));
-    setEditingRowId(String(rowId));
-    setOpenForm(true);
+    setPreviewRow(row);
   };
+
+  const closePreview = () => {
+    setPreviewRow(null);
+  };
+
+  const toTitle = (value: string) =>
+    value
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const renderPreviewValue = (value: unknown) => {
+    if (value === undefined || value === null || value === "") {
+      return "-";
+    }
+
+    if (typeof value === "string") {
+      if (isDateLikeString(value)) {
+        return formatDate(value);
+      }
+      return value;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.map((entry) => String(entry)).join(", ") : "-";
+    }
+
+    return JSON.stringify(value);
+  };
+
+  const previewEntries = useMemo(() => {
+    if (!previewRow) return [] as Array<{ label: string; value: unknown; key: string }>;
+
+    const seen = new Set<string>();
+    const primary = fields.map((field) => {
+      seen.add(field.name);
+      return {
+        key: field.name,
+        label: field.label,
+        value: previewRow[field.name],
+      };
+    });
+
+    const extras = Object.entries(previewRow)
+      .filter(([key]) => !seen.has(key))
+      .map(([key, value]) => ({
+        key,
+        label: toTitle(key),
+        value,
+      }));
+
+    return [...primary, ...extras];
+  }, [fields, previewRow]);
 
   const onUpload = async (name: string, file: File | null) => {
     if (!file) return;
@@ -392,25 +392,20 @@ export function ResourceModule({
                       {column.header}
                     </th>
                   ))}
-                  {allowDelete || allowEdit ? (
-                    <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-slate-500">Actions</th>
-                  ) : null}
+                  <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-slate-500">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-slate-50/80">
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan={columns.length + (allowDelete || allowEdit ? 1 : 0)}
-                      className="px-4 py-8 text-center text-slate-500"
-                    >
+                    <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-slate-500">
                       Loading records...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length + (allowDelete || allowEdit ? 1 : 0)} className="px-3 py-4">
+                    <td colSpan={columns.length + 1} className="px-3 py-4">
                       <EmptyState title="No records" description="Create your first record to start tracking this module." />
                     </td>
                   </tr>
@@ -425,14 +420,13 @@ export function ResourceModule({
                           : {
                               opacity: 1,
                               y: 0,
-                              backgroundColor:
-                                highlightRowId && String(row.id) === highlightRowId
-                                  ? ["rgba(207,250,254,0.9)", "rgba(255,255,255,1)"]
-                                  : "rgba(255,255,255,1)",
+                              ...(highlightRowId && String(row.id) === highlightRowId
+                                ? { backgroundColor: ["rgba(56,189,248,0.22)", "rgba(56,189,248,0.06)"] }
+                                : {}),
                             }
                       }
                       transition={{ delay: Math.min(index * 0.02, 0.2) }}
-                      className="hover:bg-slate-50/80"
+                      className="bg-transparent hover:bg-sky-500/10"
                     >
                       {columns.map((column) => {
                         const raw = row[column.key];
@@ -461,30 +455,26 @@ export function ResourceModule({
                           </td>
                         );
                       })}
-                      {allowDelete || allowEdit ? (
-                        <td className="px-3 py-3 text-right">
-                          <div className="inline-flex items-center gap-1">
-                            {allowEdit ? (
-                              <button
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 hover:bg-sky-50"
-                                onClick={() => onEdit(row)}
-                                aria-label="Edit record"
-                              >
-                                <PencilLine size={14} />
-                              </button>
-                            ) : null}
-                            {allowDelete ? (
-                              <button
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
-                                onClick={() => onDelete(String(row.id))}
-                                aria-label="Delete record"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            ) : null}
-                          </div>
-                        </td>
-                      ) : null}
+                      <td className="px-3 py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 transition hover:bg-sky-500/15"
+                            onClick={() => onEdit(row)}
+                            aria-label="Edit record to view details"
+                          >
+                            <PencilLine size={14} />
+                          </button>
+                          {allowDelete ? (
+                            <button
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-500/15"
+                              onClick={() => onDelete(String(row.id))}
+                              aria-label="Delete record"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
                     </motion.tr>
                   ))
                 )}
@@ -492,6 +482,45 @@ export function ResourceModule({
             </table>
           </div>
         </Card>
+
+        <AnimatePresence>
+          {previewRow ? (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+              initial={reduceMotion ? undefined : { opacity: 0 }}
+              animate={reduceMotion ? undefined : { opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
+              onClick={closePreview}
+            >
+              <motion.div
+                className="panel w-full max-w-2xl rounded-2xl border p-4"
+                initial={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">{title} Record Details</h3>
+                    <p className="text-xs text-slate-500">Edit record to view details only.</p>
+                  </div>
+                  <Button type="button" variant="ghost" onClick={closePreview}>
+                    <X size={14} />
+                  </Button>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {previewEntries.map((entry) => (
+                    <div key={entry.key} className="panel-muted p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{entry.label}</p>
+                      <p className="mt-1 break-words text-sm text-slate-700">{renderPreviewValue(entry.value)}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </FadeIn>
   );

@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ExternalLink, MapPin, Plus, Search, ShieldCheck } from "lucide-react";
+import { ExternalLink, MapPin, PencilLine, Plus, Search, ShieldCheck, X } from "lucide-react";
 
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,7 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
   const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const [capturingProof, setCapturingProof] = useState(false);
   const [highlightRowId, setHighlightRowId] = useState<string | null>(null);
+  const [previewRow, setPreviewRow] = useState<RetailVisitRecord | null>(null);
   const reduceMotion = useReducedMotion();
 
   const loadData = useCallback(async () => {
@@ -228,6 +229,14 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
     } finally {
       setSaving(false);
     }
+  };
+
+  const openPreview = (row: RetailVisitRecord) => {
+    setPreviewRow(row);
+  };
+
+  const closePreview = () => {
+    setPreviewRow(null);
   };
 
   return (
@@ -411,7 +420,7 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50">
                 <tr>
-                  {["Shop", "Employee", "Date", "Time", "Proof", "Location", "Photo", "Notes"].map((header) => (
+                  {["Shop", "Employee", "Date", "Time", "Proof", "Location", "Photo", "Notes", "Actions"].map((header) => (
                     <th
                       key={header}
                       className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase text-slate-500"
@@ -421,16 +430,16 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-slate-50/80">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                       Loading retail visits...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-3 py-4">
+                    <td colSpan={9} className="px-3 py-4">
                       <EmptyState
                         title="No retail visits"
                         description="Capture your first retailer meeting with live proof to start tracking."
@@ -448,14 +457,13 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                           : {
                               opacity: 1,
                               y: 0,
-                              backgroundColor:
-                                highlightRowId && row.id === highlightRowId
-                                  ? ["rgba(207,250,254,0.9)", "rgba(255,255,255,1)"]
-                                  : "rgba(255,255,255,1)",
+                              ...(highlightRowId && row.id === highlightRowId
+                                ? { backgroundColor: ["rgba(56,189,248,0.22)", "rgba(56,189,248,0.06)"] }
+                                : {}),
                             }
                       }
                       transition={{ delay: Math.min(index * 0.02, 0.2) }}
-                      className="hover:bg-slate-50/80"
+                      className="bg-transparent hover:bg-sky-500/10"
                     >
                       <td className="whitespace-nowrap px-3 py-3 text-slate-700">{row.shopName}</td>
                       <td className="whitespace-nowrap px-3 py-3 text-slate-700">{row.employeeName}</td>
@@ -471,7 +479,7 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                             href={`https://maps.google.com/?q=${row.presenceProof.latitude},${row.presenceProof.longitude}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-cyan-700 hover:text-cyan-600"
+                            className="inline-flex items-center gap-1 text-cyan-700 transition hover:text-cyan-600"
                           >
                             <MapPin size={12} />
                             Map
@@ -486,7 +494,7 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                             href={row.photoUrls[0]}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-cyan-700 hover:text-cyan-600"
+                            className="inline-flex items-center gap-1 text-cyan-700 transition hover:text-cyan-600"
                           >
                             View
                             <ExternalLink size={12} />
@@ -496,6 +504,17 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                         )}
                       </td>
                       <td className="px-3 py-3 text-slate-700">{row.notes ?? "-"}</td>
+                      <td className="px-3 py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-600 transition hover:bg-sky-500/15"
+                            onClick={() => openPreview(row)}
+                            aria-label="Edit record to view details"
+                          >
+                            <PencilLine size={14} />
+                          </button>
+                        </div>
+                      </td>
                     </motion.tr>
                   ))
                 )}
@@ -503,6 +522,71 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
             </table>
           </div>
         </Card>
+
+        <AnimatePresence>
+          {previewRow ? (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+              initial={reduceMotion ? undefined : { opacity: 0 }}
+              animate={reduceMotion ? undefined : { opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
+              onClick={closePreview}
+            >
+              <motion.div
+                className="panel w-full max-w-2xl rounded-2xl border p-4"
+                initial={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">Retail Visit Details</h3>
+                    <p className="text-xs text-slate-500">Edit record to view details only.</p>
+                  </div>
+                  <Button type="button" variant="ghost" onClick={closePreview}>
+                    <X size={14} />
+                  </Button>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Shop</p>
+                    <p className="mt-1 text-sm text-slate-700">{previewRow.shopName}</p>
+                  </div>
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Employee</p>
+                    <p className="mt-1 text-sm text-slate-700">{previewRow.employeeName}</p>
+                  </div>
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Visit Date</p>
+                    <p className="mt-1 text-sm text-slate-700">{formatDate(previewRow.visitDate)}</p>
+                  </div>
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Visit Time</p>
+                    <p className="mt-1 text-sm text-slate-700">{previewRow.visitTime || "-"}</p>
+                  </div>
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Proof Status</p>
+                    <p className="mt-1 text-sm text-slate-700">{previewRow.proofStatus}</p>
+                  </div>
+                  <div className="panel-muted p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">GPS</p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      {previewRow.presenceProof
+                        ? `${previewRow.presenceProof.latitude}, ${previewRow.presenceProof.longitude}`
+                        : "-"}
+                    </p>
+                  </div>
+                  <div className="panel-muted p-3 sm:col-span-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Notes</p>
+                    <p className="mt-1 text-sm text-slate-700">{previewRow.notes || "-"}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </FadeIn>
   );
