@@ -223,8 +223,21 @@ export function EmployeeProfileModule() {
           <h3 className="text-lg font-semibold text-slate-900">Employee Details</h3>
           <p className="text-sm text-slate-500">Existing employee list with full details. Edit only when needed.</p>
         </div>
-        <div className="w-full max-w-xs">
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employees" />
+        <div className="flex w-full max-w-xl flex-wrap items-center justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              document.getElementById("create-employee-profile")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              })
+            }
+          >
+            Create Employee Profile
+          </Button>
+          <div className="w-full max-w-xs">
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employees" />
+          </div>
         </div>
       </div>
 

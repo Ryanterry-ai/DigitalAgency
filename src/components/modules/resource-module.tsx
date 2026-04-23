@@ -40,6 +40,7 @@ export function ResourceModule({
   allowDelete,
   allowCreate = true,
   allowEdit = false,
+  createButtonLabel = "Add Record",
 }: {
   title: string;
   description: string;
@@ -49,6 +50,7 @@ export function ResourceModule({
   allowDelete?: boolean;
   allowCreate?: boolean;
   allowEdit?: boolean;
+  createButtonLabel?: string;
 }) {
   const isDateLikeString = (value: string) => {
     if (!value) return false;
@@ -334,7 +336,7 @@ export function ResourceModule({
                   }}
                 >
                   <Plus size={14} className="mr-1" />
-                  {openForm ? "Close" : "Add Record"}
+                  {openForm ? "Close" : createButtonLabel}
                 </Button>
               ) : null}
             </div>
