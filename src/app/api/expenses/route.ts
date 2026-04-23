@@ -7,8 +7,9 @@ import { createExpense, listExpenses } from "@/server/services/data.service";
 
 export async function GET() {
   try {
-    await requireApiSession();
-    return ok(await listExpenses());
+    const session = await requireApiSession();
+    const employeeId = session.role === "employee" ? session.employeeId : undefined;
+    return ok(await listExpenses(employeeId));
   } catch (error) {
     return fail("Unable to fetch expenses", 401, error instanceof Error ? error.message : undefined);
   }
@@ -16,9 +17,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiSession();
+    const session = await requireApiSession();
     const body = await request.json();
-    const parsed = expenseSchema.safeParse(body);
+    const payload = session.role === "employee" ? { ...body, employeeId: session.employeeId } : body;
+    const parsed = expenseSchema.safeParse(payload);
     if (!parsed.success) {
       return fail("Invalid expense payload", 422, parsed.error.flatten());
     }

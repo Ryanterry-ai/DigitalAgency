@@ -1,11 +1,15 @@
-﻿import { ResourceModule } from "@/components/modules/resource-module";
+import { ResourceModule } from "@/components/modules/resource-module";
 import type { FieldConfig } from "@/components/modules/resource-module";
 import { getCurrentSession } from "@/lib/auth/current-user";
-import { listEmployees } from "@/server/services/data.service";
+import { redirect } from "next/navigation";
+import { getEmployeeById } from "@/server/services/data.service";
 
 export default async function AdvanceRequestsPage() {
   const session = await getCurrentSession();
-  const employees = await listEmployees();
+  const employee = await getEmployeeById(session?.employeeId);
+  if (session?.role === "employee" && employee?.category !== "atm") {
+    redirect("/dashboard");
+  }
   const isAdmin = session?.role === "admin";
 
   const fields: FieldConfig[] = isAdmin
@@ -23,13 +27,6 @@ export default async function AdvanceRequestsPage() {
         },
       ]
     : [
-        {
-          name: "employeeId",
-          label: "Employee",
-          type: "select",
-          required: true,
-          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-        },
         { name: "requestDate", label: "Request Date", type: "date", required: true },
         { name: "amount", label: "Advance Amount", type: "number", required: true },
         { name: "reason", label: "Reason", type: "textarea", required: true },

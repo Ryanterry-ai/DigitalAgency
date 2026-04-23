@@ -7,8 +7,9 @@ import { listAttendance, punchAttendance } from "@/server/services/data.service"
 
 export async function GET() {
   try {
-    await requireApiSession();
-    return ok(await listAttendance());
+    const session = await requireApiSession();
+    const employeeId = session.role === "employee" ? session.employeeId : undefined;
+    return ok(await listAttendance(employeeId));
   } catch (error) {
     return fail("Unable to fetch attendance", 401, error instanceof Error ? error.message : undefined);
   }
@@ -16,9 +17,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiSession();
+    const session = await requireApiSession();
     const body = await request.json();
-    const parsed = attendanceSchema.safeParse(body);
+    const payload = session.role === "employee" ? { ...body, employeeId: session.employeeId } : body;
+    const parsed = attendanceSchema.safeParse(payload);
     if (!parsed.success) {
       return fail("Invalid attendance payload", 422, parsed.error.flatten());
     }

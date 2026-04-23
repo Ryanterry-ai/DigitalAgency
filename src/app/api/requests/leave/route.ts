@@ -3,11 +3,17 @@
 import { requireApiSession } from "@/lib/auth/api-session";
 import { fail, ok } from "@/lib/http";
 import { leaveRequestSchema } from "@/lib/validation/schemas";
-import { createLeaveRequest, listLeaveRequests } from "@/server/services/data.service";
+import { createLeaveRequest, getEmployeeById, listLeaveRequests } from "@/server/services/data.service";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await requireApiSession();
+    if (session.role === "employee") {
+      const employee = await getEmployeeById(session.employeeId);
+      if (employee?.category !== "atm") {
+        return fail("Leave request workflow is available for ATM employees only", 403);
+      }
+    }
     const scope = request.nextUrl.searchParams.get("scope");
     const employeeId = session.role === "employee" || scope === "mine" ? session.employeeId : undefined;
     return ok(await listLeaveRequests(employeeId));
@@ -19,6 +25,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireApiSession();
+    if (session.role === "employee") {
+      const employee = await getEmployeeById(session.employeeId);
+      if (employee?.category !== "atm") {
+        return fail("Leave request workflow is available for ATM employees only", 403);
+      }
+    }
     const body = await request.json();
     const parsed = leaveRequestSchema.safeParse(body);
     if (!parsed.success) {

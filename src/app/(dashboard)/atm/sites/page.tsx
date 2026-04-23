@@ -1,7 +1,14 @@
 import { ResourceModule } from "@/components/modules/resource-module";
+import { getCurrentSession } from "@/lib/auth/current-user";
+import { redirect } from "next/navigation";
 import { listEmployees } from "@/server/services/data.service";
 
 export default async function AtmSitesPage() {
+  const session = await getCurrentSession();
+  if (session?.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   const employees = await listEmployees();
 
   return (

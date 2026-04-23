@@ -7,6 +7,7 @@ import {
   AtmSiteRecord,
   AttendanceRecord,
   DashboardMetrics,
+  EmployeeCategory,
   EmployeeRecord,
   ExpenseRecord,
   FlmTaskRecord,
@@ -234,6 +235,82 @@ export async function getDashboardOverview() {
   };
 }
 
+export async function getEmployeeWorkbenchData(employeeId: string, category: EmployeeCategory) {
+  const now = new Date();
+  const todayKey = now.toDateString();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+
+  const attendanceToday =
+    mockDb.attendance.find(
+      (entry) => entry.employeeId === employeeId && new Date(entry.attendanceDate).toDateString() === todayKey,
+    ) ?? null;
+
+  const monthExpenses = mockDb.expenses
+    .filter((entry) => {
+      if (entry.employeeId !== employeeId) return false;
+      const date = new Date(entry.expenseDate);
+      return date.getMonth() === month && date.getFullYear() === year;
+    })
+    .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const pendingLeave = mockDb.leaveRequests.filter(
+    (entry) => entry.employeeId === employeeId && entry.status === "pending",
+  ).length;
+  const pendingAdvance = mockDb.advanceRequests.filter(
+    (entry) => entry.employeeId === employeeId && entry.status === "pending",
+  ).length;
+  const openTasks = mockDb.flmTasks
+    .filter((entry) => entry.employeeId === employeeId && entry.status !== "completed")
+    .slice(0, 5);
+
+  const common = {
+    attendanceToday,
+    monthExpenses,
+    pendingLeave,
+    pendingAdvance,
+    openTasks,
+    recentNotifications: mockDb.notifications.slice(0, 5),
+  };
+
+  if (category === "atm") {
+    const visits = mockDb.visits.filter((entry) => entry.employeeId === employeeId);
+    return {
+      category,
+      ...common,
+      kpis: {
+        visitsToday: visits.filter((entry) => new Date(entry.visitedAt).toDateString() === todayKey).length,
+        pendingIssues: visits.filter((entry) => entry.status === "pending").length,
+        resolvedIssues: visits.filter((entry) => entry.status === "resolved").length,
+      },
+      recentVisits: visits.slice(0, 6),
+      recentOrders: [] as OrderRecord[],
+      recentRetailVisits: [] as RetailVisitRecord[],
+    };
+  }
+
+  const retailVisits = mockDb.retailVisits.filter((entry) => entry.employeeId === employeeId);
+  const orders = mockDb.orders.filter((entry) => entry.employeeId === employeeId);
+  return {
+    category,
+    ...common,
+    kpis: {
+      visitsThisWeek: retailVisits.filter((entry) => new Date(entry.visitDate) >= weekStart).length,
+      newOrders: orders.filter((entry) => entry.orderStatus === "new").length,
+      followUpsDue: orders.filter((entry) => {
+        if (!entry.followUpDate) return false;
+        return new Date(entry.followUpDate) >= weekStart;
+      }).length,
+    },
+    recentVisits: [] as SiteVisitRecord[],
+    recentOrders: orders.slice(0, 6),
+    recentRetailVisits: retailVisits.slice(0, 6),
+  };
+}
+
 export async function listEmployees(search?: string) {
   const query = search?.trim().toLowerCase();
   if (!query) return mockDb.employees;
@@ -329,8 +406,9 @@ export async function deleteAtmSite(id: string) {
   return true;
 }
 
-export async function listAttendance() {
-  return mockDb.attendance;
+export async function listAttendance(employeeId?: string) {
+  if (!employeeId) return mockDb.attendance;
+  return mockDb.attendance.filter((entry) => entry.employeeId === employeeId);
 }
 
 export async function punchAttendance(payload: {
@@ -395,8 +473,9 @@ export async function punchAttendance(payload: {
   return existing;
 }
 
-export async function listExpenses() {
-  return mockDb.expenses;
+export async function listExpenses(employeeId?: string) {
+  if (!employeeId) return mockDb.expenses;
+  return mockDb.expenses.filter((entry) => entry.employeeId === employeeId);
 }
 
 export async function createExpense(input: Omit<ExpenseRecord, "id" | "employeeName" | "siteName">) {
@@ -547,8 +626,9 @@ export async function createFlmTask(input: Omit<FlmTaskRecord, "id" | "employeeN
   return record;
 }
 
-export async function listSiteVisits() {
-  return mockDb.visits;
+export async function listSiteVisits(employeeId?: string) {
+  if (!employeeId) return mockDb.visits;
+  return mockDb.visits.filter((entry) => entry.employeeId === employeeId);
 }
 
 export async function createSiteVisit(input: Omit<SiteVisitRecord, "id" | "employeeName" | "siteName">) {
@@ -588,8 +668,11 @@ export async function createRetailer(input: Omit<RetailerRecord, "id">) {
   return record;
 }
 
-export async function listRetailVisits() {
-  return mockDb.retailVisits.map((visit) => ({
+export async function listRetailVisits(employeeId?: string) {
+  const base = employeeId
+    ? mockDb.retailVisits.filter((visit) => visit.employeeId === employeeId)
+    : mockDb.retailVisits;
+  return base.map((visit) => ({
     ...visit,
     proofStatus: visit.proofStatus ?? (visit.presenceProof?.locationVerified ? "verified" : "unverified"),
   }));
@@ -631,8 +714,9 @@ export async function createRetailVisit(
   return record;
 }
 
-export async function listOrders() {
-  return mockDb.orders;
+export async function listOrders(employeeId?: string) {
+  if (!employeeId) return mockDb.orders;
+  return mockDb.orders.filter((entry) => entry.employeeId === employeeId);
 }
 
 export async function createOrder(input: Omit<OrderRecord, "id" | "employeeName" | "shopName">) {

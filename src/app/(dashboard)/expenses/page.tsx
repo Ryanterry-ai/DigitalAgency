@@ -1,21 +1,34 @@
 import { ResourceModule } from "@/components/modules/resource-module";
-import { listAtmSites, listEmployees } from "@/server/services/data.service";
+import { getCurrentSession } from "@/lib/auth/current-user";
+import { redirect } from "next/navigation";
+import { getEmployeeById, listAtmSites, listEmployees } from "@/server/services/data.service";
 
 export default async function ExpensesPage() {
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "admin";
+  const employee = await getEmployeeById(session?.employeeId);
+  if (session?.role === "employee" && employee?.category !== "atm") {
+    redirect("/dashboard");
+  }
+
   const [employees, sites] = await Promise.all([listEmployees(), listAtmSites()]);
 
   return (
     <ResourceModule
       title="Salary & Expense Tracking"
       description="Track salary, advances, petrol, maintenance, and other spend categories."
-      endpoint="/api/expenses"
+      endpoint={isAdmin ? "/api/expenses" : "/api/expenses?scope=mine"}
       fields={[
-        {
-          name: "employeeId",
-          label: "Employee",
-          type: "select",
-          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-        },
+        ...(isAdmin
+          ? [
+              {
+                name: "employeeId",
+                label: "Employee",
+                type: "select" as const,
+                options: employees.map((entry) => ({ label: entry.fullName, value: entry.id })),
+              },
+            ]
+          : []),
         {
           name: "atmSiteId",
           label: "ATM Site",

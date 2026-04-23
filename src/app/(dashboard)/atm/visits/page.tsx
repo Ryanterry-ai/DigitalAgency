@@ -1,14 +1,23 @@
 import { ResourceModule } from "@/components/modules/resource-module";
-import { listAtmSites, listEmployees } from "@/server/services/data.service";
+import { getCurrentSession } from "@/lib/auth/current-user";
+import { redirect } from "next/navigation";
+import { getEmployeeById, listAtmSites, listEmployees } from "@/server/services/data.service";
 
 export default async function AtmVisitsPage() {
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "admin";
+  const employee = await getEmployeeById(session?.employeeId);
+  if (session?.role === "employee" && employee?.category !== "atm") {
+    redirect("/dashboard");
+  }
+
   const [sites, employees] = await Promise.all([listAtmSites(), listEmployees()]);
 
   return (
     <ResourceModule
       title="ATM Site Visits & Issue Tracking"
       description="Track field issue types, supporting photos, and resolution status in real time."
-      endpoint="/api/atm/visits"
+      endpoint={isAdmin ? "/api/atm/visits" : "/api/atm/visits?scope=mine"}
       fields={[
         {
           name: "atmSiteId",
@@ -17,13 +26,17 @@ export default async function AtmVisitsPage() {
           options: sites.map((site) => ({ label: site.siteName, value: site.id })),
           required: true,
         },
-        {
-          name: "employeeId",
-          label: "Employee",
-          type: "select",
-          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-          required: true,
-        },
+        ...(isAdmin
+          ? [
+              {
+                name: "employeeId",
+                label: "Employee",
+                type: "select" as const,
+                options: employees.map((entry) => ({ label: entry.fullName, value: entry.id })),
+                required: true,
+              },
+            ]
+          : []),
         {
           name: "issueType",
           label: "Issue Type",

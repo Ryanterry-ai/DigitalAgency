@@ -1,11 +1,17 @@
 import { ResourceModule } from "@/components/modules/resource-module";
+import { getCurrentSession } from "@/lib/auth/current-user";
 
-export default function RetailersPage() {
+export default async function RetailersPage() {
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "admin";
+
   return (
     <ResourceModule
       title="Retailer Directory"
       description="Track all retailer stores, owner contacts, and territory coverage."
       endpoint="/api/retail/retailers"
+      allowCreate={isAdmin}
+      allowEdit={isAdmin}
       fields={[
         { name: "shopName", label: "Shop Name", required: true },
         { name: "ownerName", label: "Owner Name", required: true },

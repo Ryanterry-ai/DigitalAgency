@@ -3,12 +3,19 @@ import { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth/api-session";
 import { fail, ok } from "@/lib/http";
 import { siteVisitSchema } from "@/lib/validation/schemas";
-import { createSiteVisit, listSiteVisits } from "@/server/services/data.service";
+import { createSiteVisit, getEmployeeById, listSiteVisits } from "@/server/services/data.service";
 
 export async function GET() {
   try {
-    await requireApiSession();
-    return ok(await listSiteVisits());
+    const session = await requireApiSession();
+    if (session.role === "employee") {
+      const employee = await getEmployeeById(session.employeeId);
+      if (employee?.category !== "atm") {
+        return fail("ATM workflow is available for ATM employees only", 403);
+      }
+    }
+    const employeeId = session.role === "employee" ? session.employeeId : undefined;
+    return ok(await listSiteVisits(employeeId));
   } catch (error) {
     return fail("Unable to fetch site visits", 401, error instanceof Error ? error.message : undefined);
   }
@@ -16,9 +23,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiSession();
+    const session = await requireApiSession();
+    if (session.role === "employee") {
+      const employee = await getEmployeeById(session.employeeId);
+      if (employee?.category !== "atm") {
+        return fail("ATM workflow is available for ATM employees only", 403);
+      }
+    }
+
     const body = await request.json();
-    const parsed = siteVisitSchema.safeParse(body);
+    const payload = session.role === "employee" ? { ...body, employeeId: session.employeeId } : body;
+    const parsed = siteVisitSchema.safeParse(payload);
     if (!parsed.success) {
       return fail("Invalid site visit payload", 422, parsed.error.flatten());
     }

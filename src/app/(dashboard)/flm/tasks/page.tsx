@@ -1,10 +1,16 @@
-﻿import { ResourceModule } from "@/components/modules/resource-module";
+import { ResourceModule } from "@/components/modules/resource-module";
 import type { FieldConfig } from "@/components/modules/resource-module";
 import { getCurrentSession } from "@/lib/auth/current-user";
-import { listEmployees } from "@/server/services/data.service";
+import { redirect } from "next/navigation";
+import { getEmployeeById, listEmployees } from "@/server/services/data.service";
 
 export default async function FlmTasksPage() {
   const session = await getCurrentSession();
+  const employee = await getEmployeeById(session?.employeeId);
+  if (session?.role === "employee" && employee?.category !== "atm") {
+    redirect("/dashboard");
+  }
+
   const employees = await listEmployees();
   const isAdmin = session?.role === "admin";
 
@@ -16,7 +22,7 @@ export default async function FlmTasksPage() {
             label: "Employee",
             type: "select" as const,
             required: true,
-            options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
+            options: employees.map((entry) => ({ label: entry.fullName, value: entry.id })),
           },
         ]
       : []),

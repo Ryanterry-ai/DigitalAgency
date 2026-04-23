@@ -1,22 +1,29 @@
 import { ResourceModule } from "@/components/modules/resource-module";
+import { getCurrentSession } from "@/lib/auth/current-user";
 import { listEmployees } from "@/server/services/data.service";
 
 export default async function AttendancePage() {
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "admin";
   const employees = await listEmployees();
 
   return (
     <ResourceModule
       title="Attendance System"
       description="Punch-in / punch-out records with optional location capture for employee shifts."
-      endpoint="/api/attendance"
+      endpoint={isAdmin ? "/api/attendance" : "/api/attendance?scope=mine"}
       fields={[
-        {
-          name: "employeeId",
-          label: "Employee",
-          type: "select",
-          required: true,
-          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-        },
+        ...(isAdmin
+          ? [
+              {
+                name: "employeeId",
+                label: "Employee",
+                type: "select" as const,
+                required: true,
+                options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
+              },
+            ]
+          : []),
         { name: "attendanceDate", label: "Date", type: "date", required: true },
         {
           name: "punchType",

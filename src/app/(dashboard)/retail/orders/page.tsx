@@ -1,14 +1,23 @@
 import { ResourceModule } from "@/components/modules/resource-module";
-import { listEmployees, listRetailers } from "@/server/services/data.service";
+import { getCurrentSession } from "@/lib/auth/current-user";
+import { redirect } from "next/navigation";
+import { getEmployeeById, listEmployees, listRetailers } from "@/server/services/data.service";
 
 export default async function RetailOrdersPage() {
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "admin";
+  const employee = await getEmployeeById(session?.employeeId);
+  if (session?.role === "employee" && employee?.category !== "crompton") {
+    redirect("/dashboard");
+  }
+
   const [employees, retailers] = await Promise.all([listEmployees(), listRetailers()]);
 
   return (
     <ResourceModule
       title="Orders & Follow-up Notes"
       description="Track booked orders, product quantities, follow-up commitments, and the person met at each retailer."
-      endpoint="/api/retail/orders"
+      endpoint={isAdmin ? "/api/retail/orders" : "/api/retail/orders?scope=mine"}
       fields={[
         {
           name: "retailerId",
@@ -17,12 +26,16 @@ export default async function RetailOrdersPage() {
           required: true,
           options: retailers.map((retailer) => ({ label: retailer.shopName, value: retailer.id })),
         },
-        {
-          name: "employeeId",
-          label: "Employee",
-          type: "select",
-          options: employees.map((employee) => ({ label: employee.fullName, value: employee.id })),
-        },
+        ...(isAdmin
+          ? [
+              {
+                name: "employeeId",
+                label: "Employee",
+                type: "select" as const,
+                options: employees.map((entry) => ({ label: entry.fullName, value: entry.id })),
+              },
+            ]
+          : []),
         { name: "productName", label: "Product", required: true },
         { name: "quantity", label: "Quantity", type: "number", required: true },
         { name: "metPersonName", label: "Person Met Name", required: true },

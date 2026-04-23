@@ -23,6 +23,8 @@ type SelectOption = {
 type RetailVisitModuleProps = {
   retailers: SelectOption[];
   employees: SelectOption[];
+  endpoint: string;
+  isEmployee: boolean;
 };
 
 type RetailVisitFormState = {
@@ -44,7 +46,7 @@ const getDefaultForm = (): RetailVisitFormState => {
   };
 };
 
-export function RetailVisitModule({ retailers, employees }: RetailVisitModuleProps) {
+export function RetailVisitModule({ retailers, employees, endpoint, isEmployee }: RetailVisitModuleProps) {
   const [rows, setRows] = useState<RetailVisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,7 +65,7 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/retail/visits", { cache: "no-store" });
+      const response = await fetch(endpoint, { cache: "no-store" });
       const json = await response.json();
       if (!response.ok || !json.success) {
         throw new Error(json.message || "Unable to fetch retail visits");
@@ -74,11 +76,17 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [endpoint]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (isEmployee && employees[0]?.value) {
+      setFormData((current) => ({ ...current, employeeId: employees[0].value }));
+    }
+  }, [employees, isEmployee]);
 
   useEffect(() => {
     if (!highlightRowId) return;
@@ -214,7 +222,10 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
       }
 
       setHighlightRowId(String(json.data?.id ?? ""));
-      setFormData(getDefaultForm());
+      setFormData((current) => ({
+        ...getDefaultForm(),
+        employeeId: isEmployee ? current.employeeId : "",
+      }));
       setPresenceProof(null);
       setProofPreviewUrl((existing) => {
         if (existing?.startsWith("blob:")) {
@@ -292,21 +303,28 @@ export function RetailVisitModule({ retailers, employees }: RetailVisitModulePro
                   </Select>
                 </label>
 
-                <label className="space-y-1 text-sm text-slate-600">
-                  <span>Employee</span>
-                  <Select
-                    required
-                    value={formData.employeeId}
-                    onChange={(event) => setFormData((current) => ({ ...current, employeeId: event.target.value }))}
-                  >
-                    <option value="">Select employee</option>
-                    {employees.map((employee) => (
-                      <option key={employee.value} value={employee.value}>
-                        {employee.label}
-                      </option>
-                    ))}
-                  </Select>
-                </label>
+                {isEmployee ? (
+                  <label className="space-y-1 text-sm text-slate-600">
+                    <span>Employee</span>
+                    <Input value={employees[0]?.label ?? "Current Employee"} readOnly />
+                  </label>
+                ) : (
+                  <label className="space-y-1 text-sm text-slate-600">
+                    <span>Employee</span>
+                    <Select
+                      required
+                      value={formData.employeeId}
+                      onChange={(event) => setFormData((current) => ({ ...current, employeeId: event.target.value }))}
+                    >
+                      <option value="">Select employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee.value} value={employee.value}>
+                          {employee.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                )}
 
                 <label className="space-y-1 text-sm text-slate-600">
                   <span>Visit Date</span>
